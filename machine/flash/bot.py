@@ -20,6 +20,7 @@ ASSETS_PATH = "/flash/BOTS/assets"
 SPLASH_JPG = ASSETS_PATH + "/bots160x120.jpg"
 STATUS_JPG = ASSETS_PATH + "/bots_man.jpg"
 
+
 class Bot(object):
     "Class to handle all Bot board peripherals."
 
@@ -29,14 +30,14 @@ class Bot(object):
         # init the tft and display splash screen
         self.tft = Tft(BACKLIGHT_PIN)
         self.tft.init(self.tft.GENERIC,
-            width=TFT_WIDTH,
-            height=TFT_HEIGHT,
-            miso=MISO,
-            mosi=MOSI,
-            clk=CLK,
-            cs=CS,
-            dc=22,
-            color_bits=16)
+                      width=TFT_WIDTH,
+                      height=TFT_HEIGHT,
+                      miso=MISO,
+                      mosi=MOSI,
+                      clk=CLK,
+                      cs=CS,
+                      dc=22,
+                      color_bits=16)
         self.tft.image(0, 0, SPLASH_JPG)
 
         # init battery adc measurement
@@ -55,8 +56,10 @@ class Bot(object):
         self.ap_if = ap_if
 
     def update_display_status(self):
-        self.tft.text(25, 7, "BATTERY = "+str(self.battery.read())+"V", color=self.tft.RED)
-        self.tft.text(25, 22, "IP = " + str(self.ap_if.ifconfig()[0]), color=self.tft.RED)
+        self.tft.text(25, 7, "BATTERY = " +
+                      str(self.battery.read())+"V", color=self.tft.RED)
+        self.tft.text(25, 22, "IP = " +
+                      str(self.ap_if.ifconfig()[0]), color=self.tft.RED)
 
     def deinit(self):
         "Deinit all peripherals."
@@ -69,19 +72,19 @@ class Bot(object):
 
 
 class Battery(ADC):
-  "Define the battery class as an extension of the ADC."
+    "Define the battery class as an extension of the ADC."
 
-  def __init__(self, pin):
-    "Setup the ADC pin for reading battery voltage."
-    super().__init__(pin)
-    self.atten(self.ATTN_11DB)
+    def __init__(self, pin):
+        "Setup the ADC pin for reading battery voltage."
+        super().__init__(pin)
+        self.atten(self.ATTN_11DB)
 
-  def read(self):
-    "Read pin voltage and scale to battery voltage."
+    def read(self):
+        "Read pin voltage and scale to battery voltage."
 
-    voltage = super().read()*0.0057
-    voltage = floor(voltage*10)/10 
-    return voltage 
+        voltage = super().read()*0.0057
+        voltage = floor(voltage*10)/10
+        return voltage
 
 
 class Servo:
@@ -129,7 +132,6 @@ class Servo:
         self.reset_position()
 
 
-
 # constants used for accessing registers on screen
 _SWRESET = const(0x01)  # Software Reset
 _SLPOUT = const(0x11)  # Sleep Out
@@ -138,6 +140,7 @@ _DISPON = const(0x29)  # Display On
 _MADCTL = const(0x36)  # Memory Data Access
 _CASET = const(0x2A)  # Column Address Set
 _PASET = const(0x2B)  # Page Address Set
+
 
 class Tft(display.TFT):
     "Bots specific TFT wrapper for display library."
