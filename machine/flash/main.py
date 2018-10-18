@@ -30,13 +30,15 @@ def setup_ap():
     print ("FTP status ", network.ftp.status())
     print ("Telnet status ", network.telnet.status())
 
+    return ap_if
+
 
 if __name__ == '__main__':
-    setup_ap()
+    ap_if = setup_ap()
 
     try:
         import BOTS.bot as bot
-        bot = bot.Bot()
+        bot = bot.Bot(ap_if)
         main(bot)
     except Exception as e:
         sys.print_exception(e)
