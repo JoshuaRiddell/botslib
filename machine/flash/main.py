@@ -45,8 +45,8 @@ if __name__ == '__main__':
     ap_if = setup_ap()
 
     try:
-        import BOTS.bot as bot
-        bot = bot.Bot()
+        import BOTS
+        bot = BOTS.Bot()
         main(bot)
     except Exception as e:
         sys.print_exception(e)

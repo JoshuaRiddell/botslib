@@ -47,15 +47,14 @@ class Bot(object):
         self.i2c = I2C(0, sda=I2C_SDA, scl=I2C_SCL, speed=1000000)
         self.servo = Servo(self.i2c)
 
-        # finally show the tft status screen
-        self.tft.image(0, 0, STATUS_JPG)
-        self.update_display_status()
-
     def set_ap_if(self, ap_if):
         # save the ap object for later
         self.ap_if = ap_if
 
     def update_display_status(self):
+        # finally show the tft status screen
+        self.tft.image(0, 0, STATUS_JPG)
+
         self.tft.text(25, 7, "BATTERY = " +
                       str(self.battery.read())+"V", color=self.tft.RED)
         self.tft.text(25, 22, "IP = " +
@@ -120,9 +119,10 @@ class Servo:
 
     def set_rad(self, servo, angle):
         "Set the position of servo index to angle in radians."
-        off_time = 340 - (int(angle * self.rad2off))
-        self.i2c.writeto_mem(self.slave, 0x08 + (servo*4),
-                             pack('<H', off_time))
+        on_time = servo * 200
+        off_time = (servo * 200) + 340 - (int(angle * self.rad2off))
+        self.i2c.writeto_mem(self.slave, 0x06 + (servo*4),
+                             pack('<HH', on_time, off_time))
 
     def set_deg(self, servo, angle):
         "Set the position of servo index to angle in degrees."
