@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+
+<html>
+
+    <head>
+        <meta charset="utf-8" />
+        <title>MicroWebSocket Test</title>
+    </head>
+
+
+    <script language="javascript">
+        var output;
+        function init()
+        {
+            output = document.getElementById("output");
+            testWebSocket();
+        }
+        function testWebSocket()
+        {
+            var wsUri           = "ws://" + window.location.hostname;
+            writeToScreen("Connection to " + wsUri + "...")
+            websocket           = new WebSocket(wsUri);
+            websocket.onopen    = function(evt) { onOpen    (evt) };
+            websocket.onclose   = function(evt) { onClose   (evt) };
+            websocket.onmessage = function(evt) { onMessage (evt) };
+            websocket.onerror   = function(evt) { onError   (evt) };
+        }
+        function onOpen(evt)
+        {
+            writeToScreen("<strong>-- CONNECTED --</strong>");
+
+
+        }
+        function onClose(evt)
+        {
+            writeToScreen("<strong>-- DISCONNECTED --</strong>");
+        }
+        function onMessage(evt)
+        {
+
+			var outputr = document.getElementById("bat");
+            outputr.innerHTML = evt.data;
+        }
+        function onError(evt)
+        {
+            writeToScreen('ERROR : <span style="color: red;">' + evt.data + '</span>');
+        }
+        function SendMsg(msg)
+        {
+
+            websocket.send(msg);
+        }
+        function writeToScreen(s)
+        {
+            var pre = document.createElement("p");
+            pre.style.wordWrap = "break-word";
+            pre.innerHTML = s;
+            output.appendChild(pre);
+        }
+        window.addEventListener("load", init, false);
+    </script>
+
+    <body>
+<div class="slidecontainer">
+  <input type="range" min="-90" max="90" value="50" class="slider" id="myRange">
+  <p>Servo position: <span id="demo"></span></p>
+</div>
+>
+
+<script>
+var slider = document.getElementById("myRange");
+var output1 = document.getElementById("demo");
+output1.innerHTML = slider.value;
+
+slider.oninput = function() {
+  output1.innerHTML = this.value;
+  SendMsg(this.value);
+}
+
+
+
+
+</script>
+	  <h2>Worm WebSocket :</h2>
+      <div id="output"></div>
+	  	  <p><span id="bat"></span></p>
+    </body>
+
+</html>
