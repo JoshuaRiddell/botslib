@@ -36,5 +36,5 @@ class Tft(display.TFT):
         self.backlight.duty(percentage)
 
     def deinit(self):
-        pass
-        # self.backlight.deinit()
+        super().deinit()
+        self.backlight.deinit()
