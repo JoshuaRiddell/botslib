@@ -47,15 +47,14 @@ class Bot(object):
         self.battery = battery.Battery(BATTERY_SENSE)
 
         # init i2c
-        self.i2c = I2C(0, sda=I2C_SDA, scl=I2C_SCL)
-        # self.servo = servo.Servo(self.i2c)
+        self.i2c = I2C(0, sda=I2C_SDA, scl=I2C_SCL, speed=1000000)
+        self.servo = servo.Servo(self.i2c)
 
         # finally show the tft status screen
         self.tft.image(0, 0, STATUS_JPG)
         self.update_display_status()
 
     def update_display_status(self):
-        batt_v = self.battery.read()
         self.tft.text(25, 7, "BATTERY = "+str(self.battery.read())+"V", color=self.tft.RED)
         self.tft.text(25, 22, "IP = " + str(self.ap_if.ifconfig()[0]), color=self.tft.RED)
 
@@ -64,7 +63,6 @@ class Bot(object):
 
         print("Deiniting all peripherals (apart from networking)...")
         self.battery.deinit()
-        # self.servo.deinit()
+        self.servo.deinit()
         self.i2c.deinit()
         self.tft.deinit()
-        # self.servo.deinit()

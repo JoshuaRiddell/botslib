@@ -11,6 +11,12 @@ def main(bot):
     print(bot.battery.read())
 
 
+    for i in range(90):
+        bot.servo.set_deg(0, i-45)
+        time.sleep(0.2)
+        print(i)
+
+
 def setup_ap():
     "create access point and start telnet and ftp server"
     # create ap
