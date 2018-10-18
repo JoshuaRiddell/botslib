@@ -48,7 +48,7 @@ class Bot(object):
 
         # init i2c
         self.i2c = I2C(0, sda=I2C_SDA, scl=I2C_SCL)
-        # self.servo = servo.Servo(i2c)
+        # self.servo = servo.Servo(self.i2c)
 
         # finally show the tft status screen
         self.tft.image(0, 0, STATUS_JPG)
@@ -64,6 +64,7 @@ class Bot(object):
 
         print("Deiniting all peripherals (apart from networking)...")
         self.battery.deinit()
+        # self.servo.deinit()
         self.i2c.deinit()
         self.tft.deinit()
         # self.servo.deinit()

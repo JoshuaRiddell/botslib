@@ -6,8 +6,10 @@ SSID = "Robot_Spider"
 USER = "micro"
 PASSWORD = "python"
 
+
 def main(bot):
     print(bot.battery.read())
+
 
 def setup_ap():
     "create access point and start telnet and ftp server"
@@ -21,10 +23,11 @@ def setup_ap():
     # create telnet and ftp
     network.telnet.start(user=USER, password=PASSWORD, timeout=1000)
     network.ftp.start(user=USER, password=PASSWORD,
-                        buffsize=1024, timeout=1000)
+                      buffsize=1024, timeout=1000)
 
     # wait for telnet and ftp to be up
-    while network.ftp.status()[0] != 2:time.sleep(0.1)
+    while network.ftp.status()[0] != 2:
+        time.sleep(0.1)
 
     # print status
     print ("FTP status ", network.ftp.status())
