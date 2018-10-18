@@ -6,9 +6,9 @@ SSID = "Robot_Spider"
 USER = "micro"
 PASSWORD = "python"
 
-def main():
-    import BOTS.bot as bot
-    bot = bot.Bot()
+def main(bot):
+
+    print(bot.battery.read())
 
     # create an instance of the I2C bus
     I2C_bus = I2C(0, sda=27, scl=26)
@@ -66,6 +66,10 @@ if __name__ == '__main__':
     setup_ap()
 
     try:
-        main()
+        import BOTS.bot as bot
+        bot = bot.Bot()
+        main(bot)
     except Exception as e:
         sys.print_exception(e)
+    finally:
+        bot.deinit()
