@@ -1,7 +1,6 @@
 import display
 from time import sleep
 from machine import PWM
-from struct import pack
 
 # constants used for accessing registers on screen
 _SWRESET = const(0x01)  # Software Reset

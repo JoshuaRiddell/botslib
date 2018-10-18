@@ -10,7 +10,6 @@ PASSWORD = "python"
 def main(bot):
     print(bot.battery.read())
 
-
     for i in range(90):
         bot.servo.set_deg(0, i-45)
         time.sleep(0.2)
@@ -47,7 +46,7 @@ if __name__ == '__main__':
 
     try:
         import BOTS.bot as bot
-        bot = bot.Bot(ap_if)
+        bot = bot.Bot()
         main(bot)
     except Exception as e:
         sys.print_exception(e)
