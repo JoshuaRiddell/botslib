@@ -1,0 +1,3 @@
+BOTSHOST=192.168.4.1
+USER=micro
+PASSWORD=python
