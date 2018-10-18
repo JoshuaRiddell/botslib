@@ -2,9 +2,9 @@
 
 . ./config.sh
 
-TARGET=/flash
-SOURCE=.
+TARGET=/
+SOURCE=$(pwd)/machine
 
 lftp $USER:$PASSWORD@$BOTSHOST -e "
-    mirror -v --no-perms --ignore-time --exclude .git/ --reverse --delete --verbose $SOURCE $TARGET
+    mirror -R -v --no-perms --ignore-time --exclude --reverse --delete --verbose $SOURCE $TARGET
 "
