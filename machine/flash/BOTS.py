@@ -90,6 +90,7 @@ class Servo:
     "Class for handling PWM servo driver through the PCA9685 chip."
 
     rad2off = 200/(pi/2)
+    maximum_angle = 1.22173
 
     def __init__(self, i2c, slave=0x40):
         # save i2c things for later
@@ -119,6 +120,9 @@ class Servo:
 
     def set_rad(self, servo, angle):
         "Set the position of servo index to angle in radians."
+        if (abs(angle) > self.maximum_angle):
+            return
+
         on_time = servo * 200
         off_time = (servo * 200) + 340 - (int(angle * self.rad2off))
         self.i2c.writeto_mem(self.slave, 0x06 + (servo*4),
