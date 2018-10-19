@@ -7,13 +7,20 @@ USER = "micro"
 PASSWORD = "python"
 
 
-def main(bot):
+def main():
+    bot = BOTS.Bot()
+
     print(bot.battery.read())
 
-    for i in range(90):
-        bot.servo.set_deg(0, i-45)
+    for i in range(70):
+        bot.servo.set_deg(0, i-35)
+        bot.servo.set_deg(4, i-35)
+        bot.servo.set_deg(10, i-35)
+        bot.servo.set_deg(14, i-35)
         time.sleep(0.2)
         print(i)
+
+    return bot
 
 
 def setup_ap():
@@ -46,9 +53,7 @@ if __name__ == '__main__':
 
     try:
         import BOTS
-        bot = BOTS.Bot()
-        main(bot)
+        bot = main()
     except Exception as e:
         sys.print_exception(e)
-    finally:
         bot.deinit()
