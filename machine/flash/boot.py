@@ -17,7 +17,7 @@ def reload(mod):
     gc.collect()
     return __import__(mod_name)
 
-def setup_ap(ssid, user, password):
+def setup_ap(ssid, user, password, time_out=1000):
     "create access point and start telnet and ftp server"
     # create ap
     ap_if = network.WLAN(network.AP_IF)
@@ -27,13 +27,14 @@ def setup_ap(ssid, user, password):
     time.sleep(1)
 
     # create telnet and ftp
-    network.telnet.start(user=user, password=password, timeout=1000)
+    network.telnet.start(user=user, password=password, timeout=time_out)
     network.ftp.start(user=user, password=password,
-                      buffsize=1024, timeout=1000)
+                      buffsize=1024, timeout=time_out)
 
     # wait for telnet and ftp to be up
-    while network.ftp.status()[0] != 2:
+    while network.ftp.status()[0] != 2 and time_out > 0:
         time.sleep(0.1)
+        time_out -= 10
 
     # print status
     print ("FTP status ", network.ftp.status())
