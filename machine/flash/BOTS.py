@@ -16,7 +16,7 @@ CLK = const(18)
 CS = const(5)
 BACKLIGHT_PIN = const(23)
 
-ASSETS_PATH = "/flash/BOTS/assets"
+ASSETS_PATH = "/flash/assets"
 SPLASH_JPG = ASSETS_PATH + "/bots160x120.jpg"
 STATUS_JPG = ASSETS_PATH + "/bots_man.jpg"
 
@@ -68,6 +68,9 @@ class Bot(object):
         self.servo.deinit()
         self.i2c.deinit()
         self.tft.deinit()
+
+    def __del__(self):
+        self.deinit()
 
 
 class Battery(ADC):
