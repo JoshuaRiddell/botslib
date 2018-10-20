@@ -1,5 +1,5 @@
 import display
-from machine import I2C, PWM, ADC
+from machine import I2C, PWM, ADC, Pin
 from time import sleep, sleep_us
 from struct import pack
 from math import pi, floor
@@ -16,6 +16,9 @@ CLK = const(18)
 CS = const(5)
 BACKLIGHT_PIN = const(23)
 
+BOOT_PIN = const(0)
+USER_PIN = const(25)
+
 ASSETS_PATH = "/flash/assets"
 SPLASH_JPG = ASSETS_PATH + "/bots160x120.jpg"
 STATUS_JPG = ASSETS_PATH + "/bots_man.jpg"
@@ -26,6 +29,9 @@ class Bot(object):
 
     def __init__(self):
         "Initialise all peripherals."
+
+        self.boot_sw = Switch(BOOT_PIN)
+        self.user_sw = Switch(USER_PIN)
 
         # init the tft and display splash screen
         self.tft = Tft(BACKLIGHT_PIN)
@@ -68,9 +74,19 @@ class Bot(object):
         self.servo.deinit()
         self.i2c.deinit()
         self.tft.deinit()
+        self.boot_sw.deinit()
+        self.user_sw.deinit()
 
     def __del__(self):
         self.deinit()
+
+
+class Switch(Pin):
+    def __init__(self, pin):
+        super().__init__(pin, self.IN, self.PULL_UP)
+
+    def pressed(self):
+        return not self.value()
 
 
 class Battery(ADC):
