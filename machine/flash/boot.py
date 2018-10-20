@@ -25,6 +25,8 @@ def setup_ap(ssid, user, password, time_out=1000):
     ap_if.config(essid=ssid)
 
     time.sleep(1)
+    #print IP
+    print(ap_if.ifconfig())
 
     # create telnet and ftp
     network.telnet.start(user=user, password=password, timeout=time_out)
