@@ -157,7 +157,7 @@ class Tft(display.TFT):
         self.backlight = PWM(backlight_pin, freq=200, duty=default_brightness)
 
     def init(self, tft_type, **kwargs):
-        super().init(tft_type, **kwargs)
+        self.init(tft_type, **kwargs)
 
         self.tft_writecmd(_SWRESET)  # Software Rest
         sleep(0.2)
@@ -176,5 +176,5 @@ class Tft(display.TFT):
         self.backlight.duty(percentage)
 
     def deinit(self):
-        super().deinit()
+        self.deinit()
         self.backlight.deinit()
