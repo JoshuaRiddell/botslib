@@ -6,7 +6,7 @@ from microWebSrv import MicroWebSrv
 
 def main():
     global calibrate_ws
-    
+
     bot = BOTS.Bot()
 
     calibrate_ws = SocketHandlers.Calibrate(bot)
@@ -14,7 +14,6 @@ def main():
 
     sp = spider.Spider(bot)
 
-    sp.set_leg(0, 120, 0, 10)
     # time.sleep(1)
     # bot.servo.reset_position()
 

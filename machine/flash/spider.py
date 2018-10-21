@@ -24,25 +24,54 @@ class Spider(object):
     def body_xyzrpy(self, x, y, z, roll, pitch, yaw):
         pass
 
-    def body_xyz(self, x, y, z, roll, pitch, yaw):
-        pass
+    def body_xyz(self, x, y, z):
+        
+        self.set_leg(0, 70-x, -50-y, z)
+        self.set_leg(1, 70-x, 50-y, z)
+        self.set_leg(2, -70-x, 50-y, z)
+        self.set_leg(3, -70-x, -50-y, z)
     
     def body_rpy(self, roll, pitch, yaw):
         pass
     
     def set_leg(self, id, x, y, z):
-        [t1, t2, t3] = self.leg_ik(x,y,z)
+        
+        # do coordinate system transformations for different legs
+        z = -z
+        if id == 0:
+            o_r = 1
+            t23 = 1
+        elif id == 1:
+            o_r = -1
+            t23 = -1
+        elif id == 2:
+            x = -x
+            y = -y
+            o_r = 1
+            t23 = 1
+        elif id == 3:
+            x = -x
+            y = -y
+            o_r = -1
+            t23 = -1
+
+        # do inverse kinematics
+        [t1, t2, t3] = self.leg_ik(x,y,z,o_r=o_r,t23=t23)
         t3 = -t3
-        print([t1, t2, t3])
-        self.set_servo(2, t1)
-        self.set_servo(1, t2)
-        self.set_servo(0, t3)
 
-    def leg_ik_deg(self, x, y, z):
-        return [degrees(x) for x in self.leg_ik(x,y,z)]
+        # write to servos
+        r_id = id*4
+        self.set_servo(r_id, t3)
+        r_id += 1
+        self.set_servo(r_id, t2)
+        r_id += 1
+        self.set_servo(r_id, t1)
 
-    def leg_ik(self, x, y, z):
-        t = atan2(y, x) + pi/2
+    def leg_ik_deg(self, x, y, z, **kwargs):
+        return [degrees(x) for x in self.leg_ik(x,y,z, **kwargs)]
+
+    def leg_ik(self, x, y, z, o_r=1, t23=1):
+        t = atan2(y, x) + o_r * pi/2
         u = [cos(t) * l4, sin(t) * l4]
 
         v1 = [x+u[0], y+u[1]]
@@ -61,6 +90,9 @@ class Spider(object):
 
         t2 = t_depression - triangle_upper
         t3 = pi - t_internal
+
+        t2 = t23 * t2
+        t3 = t23 * t3
 
         return [t1, t2, t3]
 
