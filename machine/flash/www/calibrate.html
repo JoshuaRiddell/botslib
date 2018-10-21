@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Calibrate Servos</title>
+</head>
+
+<script src="calibrate.js"></script>
+
+<body>
+    <h1>Calibrate Servos</h1>
+
+    <h2>Connection Status:</h2>
+    <div id="connection_status"></div>
+
+    <div class="angle_container">
+        <p>Angle (degrees): <span id="degrees_readout"></span></p>
+        <input type="range" min="-100" max="100" value="0" id="degrees_slider">
+    </div>
+
+    <div class="servo_id_container">
+        <p>Servo ID: <span id="id_readout"></span></p>
+        <input type="number" min="0" max="15" value="0" id="id_input">
+    </div>
+
+</body>
+
+</html>

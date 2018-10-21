@@ -18,7 +18,7 @@ class Spider(object):
 
     def __init__(self, bot):
         self.bot = bot
-        # self.set_servo = bot.servo.set_rad
+        self.set_servo = bot.servo.set_rad
 
     def body_xyzrpy(self, x, y, z, roll, pitch, yaw):
         pass
@@ -29,6 +29,12 @@ class Spider(object):
     def body_rpy(self, roll, pitch, yaw):
         pass
     
+    def set_leg(self, id, x, y, z):
+        [t1, t2, t3] = self.leg_ik(x,y,z)
+        self.set_servo(0, t1)
+        self.set_servo(1, t2)
+        self.set_servo(2, t3)
+
     def leg_ik_deg(self, x, y, z):
         return [degrees(x) for x in self.leg_ik(x,y,z)]
 

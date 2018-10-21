@@ -2,7 +2,7 @@ import display
 from machine import I2C, PWM, ADC, Pin
 from time import sleep, sleep_us
 from struct import pack
-from math import pi, floor
+from math import pi, floor, degrees, radians
 
 BATTERY_SENSE = const(35)
 I2C_SDA = const(27)
@@ -18,6 +18,8 @@ BACKLIGHT_PIN = const(23)
 
 BOOT_PIN = const(0)
 USER_PIN = const(25)
+
+NUM_SERVOS = const(16)
 
 ASSETS_PATH = "/flash/assets"
 SPLASH_JPG = ASSETS_PATH + "/bots160x120.jpg"
@@ -111,6 +113,8 @@ class Servo:
     rad2off = 200/(pi/2)
     maximum_angle = 1.22173
 
+    current_pos = [0] * NUM_SERVOS
+
     def __init__(self, i2c, slave=0x40):
         # save i2c things for later
         self.slave = slave
@@ -137,10 +141,18 @@ class Servo:
         for servo in r:  # set all servos to popsition 0
             f(servo, 0)
 
+    def get_rad(self, servo):
+        return self.current_pos[servo]
+
+    def get_deg(self, servo):
+        return degrees(self.get_rad(servo))
+
     def set_rad(self, servo, angle):
         "Set the position of servo index to angle in radians."
         if (abs(angle) > self.maximum_angle):
             return
+        
+        self.current_pos[servo] = angle
 
         on_time = servo * 200
         off_time = (servo * 200) + 340 - (int(angle * self.rad2off))
@@ -149,7 +161,7 @@ class Servo:
 
     def set_deg(self, servo, angle):
         "Set the position of servo index to angle in degrees."
-        self.set_rad(servo, angle*pi/180)
+        self.set_rad(servo, radians(angle))
 
     def deinit(self):
         self.reset_position()

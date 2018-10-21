@@ -3,11 +3,7 @@ import sys
 import gc
 import network
 import time
-
-sys.path[1] = '/flash/lib'
-sys.path.append('/flash/assets')
-sys.path.append('/flash/core')
-
+import json
 
 def reload(mod):
     "De-allocate module, garbage collect and then reload module."
@@ -17,13 +13,30 @@ def reload(mod):
     gc.collect()
     return __import__(mod_name)
 
-def setup_ap(ssid, user, password):
-    "create access point and start telnet and ftp server"
-    # create ap
-    ap_if = network.WLAN(network.AP_IF)
-    ap_if.active(True)
-    ap_if.config(essid=ssid)
+def setup_wlan():
+    "create wlan object and start telnet and ftp server"
 
+    with open("/flash/network_config.json") as fd:
+        wifi_config = json.load(fd)
+
+    ssid = wifi_config.get("ssid")
+    wifimode = wifi_config.get("wifimode")
+    passkey = wifi_config.get("passkey")
+    user = wifi_config.get("user")
+    password = wifi_config.get("password")
+
+    # create wlan object
+    if wifimode == "AP":
+        wlan = network.WLAN(network.AP_IF)
+        wlan.config(essid=ssid)
+    elif wifimode == "STA":
+        wlan = network.WLAN(network.STA_IF)
+        wlan.connect(ssid, passkey)
+    else:
+        print("Wifi disabled")
+
+    # activate wlan
+    wlan.active(True)
     time.sleep(1)
 
     # create telnet and ftp
@@ -39,4 +52,4 @@ def setup_ap(ssid, user, password):
     print ("FTP status ", network.ftp.status())
     print ("Telnet status ", network.telnet.status())
 
-    return ap_if
+    return wlan
