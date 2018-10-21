@@ -1,4 +1,5 @@
 import BOTS
+import utime
 
 class Calibrate(object):
 
@@ -26,3 +27,23 @@ class Calibrate(object):
             with open(BOTS.SERVO_CALIBRATION_FILE, 'w') as fd:
                 for row in rows:
                     fd.write(",".join(row) + "\n")
+
+class Controller(object):
+    def __init__(self, spider):
+        self.spider = spider
+
+    def socket_text_recv_cb(self, webSocket, msg):
+        old_time = utime.ticks_us()
+        msg_id = msg[0]
+        value = msg[1:]
+
+        if msg_id == "a":
+            axes = value.split(',')
+
+            self.spider.body_xyz(float(axes[2])*35, -float(axes[3])*35, -70)
+
+        time_taken = utime.ticks_us() - old_time
+        # print("updated in: " + str(time_taken))
+        # print("got " + str(msg_id) + " " + str(value))
+
+        

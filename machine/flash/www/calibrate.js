@@ -1,4 +1,7 @@
 window.addEventListener("load", init, false);
+window.addEventListener('beforeunload', function (e) {
+    websocket.close();
+});
 
 var websocket;
 

@@ -6,17 +6,35 @@ from microWebSrv import MicroWebSrv
 
 def main():
     global calibrate_ws
+    global controller_ws
 
     bot = BOTS.Bot()
-
-    calibrate_ws = SocketHandlers.Calibrate(bot)
-    setup_web_server(accept_socket_cb)
-
     sp = spider.Spider(bot)
+
+    # calibrate_ws = SocketHandlers.Calibrate(bot)
+    # controller_ws = SocketHandlers.Controller(sp)
+    # setup_web_server(accept_socket_cb)
+
+    r = range(40)
+    update = sp.body_xyz
+
+    while True:
+        for v in r:
+            update(-20, v-20, -70)
+
+        for v in r:
+            update(v-20, 20, -70)
+
+        for v in r:
+            update(20, 20-v, -70)
+
+        for v in r:
+            update(20-v, -20, -70)
+
+        time.sleep(5)
 
     # time.sleep(1)
     # bot.servo.reset_position()
-
 
     # if bot.user_sw.pressed():
     #     boot_menu()
@@ -35,9 +53,12 @@ def main():
 
 def accept_socket_cb(webSocket, httpClient):
     global calibrate_ws
+    global controller_ws
 
     if (httpClient.GetRequestPath() == "/calibrate"):
         webSocket.RecvTextCallback = calibrate_ws.socket_text_recv_cb
+    if (httpClient.GetRequestPath() == "/controller"):
+        webSocket.RecvTextCallback = controller_ws.socket_text_recv_cb
 
 
 if __name__ == '__main__':
