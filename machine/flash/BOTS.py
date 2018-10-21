@@ -109,7 +109,7 @@ class Battery(ADC):
         return voltage
 
 
-class Servo:
+class Servo(object):
     "Class for handling PWM servo driver through the PCA9685 chip."
 
     rad2off = 200/(pi/2)
@@ -127,18 +127,23 @@ class Servo:
         if not SERVO_CALIBRATION_FILE in listdir('.'):
             print("No calibration.csv found, using 0 calibration.")
         else:
-            with open(SERVO_CALIBRATION_FILE, 'r') as fd:
-                for line in fd.readlines():
-                    vals = line.strip().split(',')
+            self.load_calib_from_file(SERVO_CALIBRATION_FILE)
+        
+        self.reset_position()
 
-                    vals[0] = int(vals[0])
-                    vals[1] = float(vals[1])
+    def load_calib_from_file(self, filename):
+        with open(filename, 'r') as fd:
+            for line in fd.readlines():
+                vals = line.strip().split(',')
 
-                    self.zero_pos[vals[0]] = vals[1]
+                vals[0] = int(vals[0])
+                vals[1] = float(vals[1])
 
-                    # init the PWM generating chip
-                    self._init_pca()
-                    self.reset_position()
+                self.zero_pos[vals[0]] = vals[1]
+
+                # init the PWM generating chip
+                self._init_pca()
+                self.reset_position()
 
     def set_calib(self, zero_pos):
         self.zero_pos = zero_pos[:]

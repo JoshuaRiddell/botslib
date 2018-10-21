@@ -38,7 +38,7 @@ function init() {
 }
 
 function attach_socket() {
-    var wsUri = "ws://" + window.location.hostname;
+    var wsUri = "ws://" + window.location.hostname + "/calibrate";
     update_connection_status("Connection to " + wsUri + " ...")
     websocket = new WebSocket(wsUri);
     websocket.onopen = function (evt) { onOpen(evt) };

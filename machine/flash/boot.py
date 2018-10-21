@@ -53,3 +53,10 @@ def setup_wlan():
     print ("Telnet status ", network.telnet.status())
 
     return wlan
+
+def setup_web_server(accept_socket_cb):
+    mws = MicroWebSrv()
+    mws.MaxWebSocketRecvLen = 256
+    mws.WebSocketThreaded = False
+    mws.AcceptWebSocketCallback = accept_socket_cb
+    mws.Start()
