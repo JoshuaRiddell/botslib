@@ -7,6 +7,8 @@ var degrees_slider;
 var degrees_readout;
 var id_input;
 var id_readout;
+var write_button;
+var write_readout;
 
 function init() {
     connection_status = document.getElementById("connection_status");
@@ -14,6 +16,8 @@ function init() {
     degrees_readout = document.getElementById("degrees_readout");
     id_input = document.getElementById("id_input");
     id_readout = document.getElementById("id_readout");
+    write_button = document.getElementById("write_button");
+    write_readout = document.getElementById("write_readout");
 
     degrees_slider.oninput = function () {
         degrees_readout.innerHTML = this.value;
@@ -23,6 +27,11 @@ function init() {
     id_input.oninput = function () {
         id_readout.innerHTML = this.value;
         socket_send("i" + this.value);
+    }
+
+    write_button.onclick = function () {
+        write_readout.innerHTML = "Sent!";
+        socket_send("w");
     }
 
     attach_socket();

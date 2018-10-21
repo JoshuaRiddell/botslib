@@ -1,4 +1,5 @@
 from math import atan2, asin, pi, sin, cos, acos, sqrt, degrees
+import time
 
 # to allow importing on non micropython systems
 try:
@@ -31,9 +32,11 @@ class Spider(object):
     
     def set_leg(self, id, x, y, z):
         [t1, t2, t3] = self.leg_ik(x,y,z)
-        self.set_servo(0, t1)
+        t3 = -t3
+        print([t1, t2, t3])
+        self.set_servo(2, t1)
         self.set_servo(1, t2)
-        self.set_servo(2, t3)
+        self.set_servo(0, t3)
 
     def leg_ik_deg(self, x, y, z):
         return [degrees(x) for x in self.leg_ik(x,y,z)]

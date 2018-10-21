@@ -15,14 +15,19 @@
     <h2>Connection Status:</h2>
     <div id="connection_status"></div>
 
-    <div class="angle_container">
+    <div>
         <p>Angle (degrees): <span id="degrees_readout"></span></p>
         <input type="range" min="-100" max="100" value="0" id="degrees_slider">
     </div>
 
-    <div class="servo_id_container">
+    <div>
         <p>Servo ID: <span id="id_readout"></span></p>
         <input type="number" min="0" max="15" value="0" id="id_input">
+    </div>
+
+    <div>
+        <p>Write To Onboard CSV: <span id="write_readout"></span></p>
+        <button id="write_button">Write CSV</button>
     </div>
 
 </body>

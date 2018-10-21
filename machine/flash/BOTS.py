@@ -3,6 +3,7 @@ from machine import I2C, PWM, ADC, Pin
 from time import sleep, sleep_us
 from struct import pack
 from math import pi, floor, degrees, radians
+from os import listdir
 
 BATTERY_SENSE = const(35)
 I2C_SDA = const(27)
@@ -25,6 +26,7 @@ ASSETS_PATH = "/flash/assets"
 SPLASH_JPG = ASSETS_PATH + "/bots160x120.jpg"
 STATUS_JPG = ASSETS_PATH + "/bots_man.jpg"
 
+SERVO_CALIBRATION_FILE = "calib.csv"
 
 class Bot(object):
     "Class to handle all Bot board peripherals."
@@ -113,6 +115,7 @@ class Servo:
     rad2off = 200/(pi/2)
     maximum_angle = 1.22173
 
+    zero_pos = [0] * NUM_SERVOS
     current_pos = [0] * NUM_SERVOS
 
     def __init__(self, i2c, slave=0x40):
@@ -120,9 +123,25 @@ class Servo:
         self.slave = slave
         self.i2c = i2c
 
-        # init the PWM generating chip
-        self._init_pca()
-        self.reset_position()
+        # try and load calibration file
+        if not SERVO_CALIBRATION_FILE in listdir('.'):
+            print("No calibration.csv found, using 0 calibration.")
+        else:
+            with open(SERVO_CALIBRATION_FILE, 'r') as fd:
+                for line in fd.readlines():
+                    vals = line.strip().split(',')
+
+                    vals[0] = int(vals[0])
+                    vals[1] = float(vals[1])
+
+                    self.zero_pos[vals[0]] = vals[1]
+
+                    # init the PWM generating chip
+                    self._init_pca()
+                    self.reset_position()
+
+    def set_calib(self, zero_pos):
+        self.zero_pos = zero_pos[:]
 
     def _init_pca(self):
         "Initialise the PCA9685 chip."
@@ -141,14 +160,33 @@ class Servo:
         for servo in r:  # set all servos to popsition 0
             f(servo, 0)
 
+    def get_all(self):
+        return self.current_pos
+
     def get_rad(self, servo):
         return self.current_pos[servo]
 
     def get_deg(self, servo):
         return degrees(self.get_rad(servo))
 
+    def set_deg_raw(self, servo, angle):
+        "Set the position of servo index to angle in degrees."
+        self.set_rad_raw(servo, radians(angle))
+
+    def set_rad_raw(self, servo, angle):
+
+        self.current_pos[servo] = angle
+
+        on_time = servo * 200
+        off_time = (servo * 200) + 340 - (int(angle * self.rad2off))
+        self.i2c.writeto_mem(self.slave, 0x06 + (servo*4),
+                             pack('<HH', on_time, off_time))
+
+
     def set_rad(self, servo, angle):
         "Set the position of servo index to angle in radians."
+        angle += self.zero_pos[servo]
+
         if (abs(angle) > self.maximum_angle):
             return
         

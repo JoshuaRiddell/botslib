@@ -46,7 +46,16 @@ def socket_text_recv(webSocket, msg):
         webSocket.SendText("a" + str(round(bot.servo.get_deg(int(value)))))
         current_id = int(value)
     elif msg_id == 'a':
-        bot.servo.set_deg(current_id, float(value))
+        bot.servo.set_deg_raw(current_id, float(value))
+    elif msg_id == 'w':
+        zero_points = bot.servo.get_all()
+        ids = [x for x in range(BOTS.NUM_SERVOS)]
+
+        rows = [[str(a), str(b)] for a, b in zip(ids, zero_points)]
+
+        with open(BOTS.SERVO_CALIBRATION_FILE, 'w') as fd:
+            for row in rows:
+                fd.write(",".join(row) + "\n")
 
 def setup_web_server():
     mws = MicroWebSrv()                                    # TCP port 80 and files in /flash/www
