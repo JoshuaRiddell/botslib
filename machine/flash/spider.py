@@ -30,47 +30,54 @@ class Spider(object):
         self.pitch = 0
         self.yaw = 0
 
-    def body_xyzrpy(self, x, y, z, roll, pitch, yaw):
-        pass
+        self.stance_x = 70
+        self.stance_y = 50
+        self.stance_z = -50
 
-    def body_xyz(self, x, y, z):
-        self.set_leg(0, 70-x, -50-y, z)
-        self.set_leg(1, 70-x, 50-y, z)
-        self.set_leg(2, -70-x, 50-y, z)
-        self.set_leg(3, -70-x, -50-y, z)
-
+    def xyzrpy(self, x, y, z, roll, pitch, yaw):
         self.x = x
         self.y = y
         self.z = z
+        self.roll = roll
+        self.pitch = pitch
+        self.yaw = yaw
+
+        self.update_body()
+
+    def xyz(self, x, y, z):
+        self.x = x
+        self.y = y
+        self.z = z
+
+        self.update_body()
     
-    def body_rpy(self, roll, pitch, yaw):
-        [x, y, z] = self.leg_roll_pitch(roll, pitch, -yaw)
+    def rpy(self, roll, pitch, yaw):
+        self.roll = roll
+        self.pitch = pitch
+        self.yaw = yaw
+
+        self.update_body()
+    
+    def update_body(self):
+        [x, y, z] = self.body_to_leg(self.x, self.y, self.z, self.roll, self.pitch, -self.yaw)
         self.set_leg(0, x, -y, z)
-        print([x, y, z])
 
-        [x, y, z] = self.leg_roll_pitch(roll, -pitch, yaw)
+        [x, y, z] = self.body_to_leg(self.x, -self.y, self.z, self.roll, -self.pitch, self.yaw)
         self.set_leg(1, x, y, z)
-        print([x, y, z])
 
-        [x, y, z] = self.leg_roll_pitch(-roll, -pitch, -yaw)
+        [x, y, z] = self.body_to_leg(-self.x, -self.y, self.z, -self.roll, -self.pitch, -self.yaw)
         self.set_leg(2, -x, y, z)
-        print([x, y, z])
 
-        [x, y, z] = self.leg_roll_pitch(-roll, pitch, yaw)
+        [x, y, z] = self.body_to_leg(-self.x, self.y, self.z, -self.roll, self.pitch, self.yaw)
         self.set_leg(3, -x, -y, z)
-        print([x, y, z])
 
 
-    def leg_roll_pitch(self, roll, pitch, yaw):
-        z = -self.z
-        x = 70
-        y = 50
-
-        v1 = z - bl/2 * sin(pitch)
-        hy = y + (1 - cos(pitch)) * bl/2
+    def body_to_leg(self, x, y, z, roll, pitch, yaw):
+        v1 = -(self.stance_z - z) - bl/2 * sin(pitch)
+        hy = (self.stance_y + y) + (1 - cos(pitch)) * bl/2
 
         v2 = v1 - bw/2 * sin(roll)
-        hx = x + (1 - cos(roll)) * bw/2
+        hx = (self.stance_x + x) + (1 - cos(roll)) * bw/2
         tix = pi/2 - atan2(hx, v2) - roll
         tiy = pi/2 - atan2(hy, v2) - pitch
 
@@ -83,13 +90,9 @@ class Spider(object):
         ryaw = atan2(ry, rx)
         rmag = sqrt(rx**2 + ry**2)
 
-        print(rx, ry)
-
         ryaw += yaw
         rx = rmag * sin(ryaw)
         ry = rmag * cos(ryaw)
-
-        print(rx, ry)
 
         hx = rx - bw/2 * cos(pitch)
         hy = ry - bl/2 * cos(roll)
@@ -100,10 +103,6 @@ class Spider(object):
         y = hypy * cos(tiy)
 
         return [x, y, z]
-
-        # print(hyp, ti)
-        # print(h, v)
-        # print([-x, 0, z])
 
     def set_leg(self, id, x, y, z):
         
