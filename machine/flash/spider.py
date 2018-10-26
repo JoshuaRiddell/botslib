@@ -3,8 +3,9 @@ import time
 
 # to allow importing on non micropython systems
 try:
-    const(10)
+    NULL = const(10)
 except:
+    print("const() not defined. Defining...")
     const = lambda x: x
 
 l1 = const(25)
@@ -21,19 +22,46 @@ class Spider(object):
         self.bot = bot
         self.set_servo = bot.servo.set_rad
 
+        self.x = 0
+        self.y = 0
+        self.z = 0
+
+        self.roll = 0
+        self.pitch = 0
+        self.yaw = 0
+
     def body_xyzrpy(self, x, y, z, roll, pitch, yaw):
         pass
 
     def body_xyz(self, x, y, z):
-        
         self.set_leg(0, 70-x, -50-y, z)
         self.set_leg(1, 70-x, 50-y, z)
         self.set_leg(2, -70-x, 50-y, z)
         self.set_leg(3, -70-x, -50-y, z)
+
+        self.x = x
+        self.y = y
+        self.z = z
     
     def body_rpy(self, roll, pitch, yaw):
-        pass
-    
+
+        z = -self.z
+        x = 70
+
+        v = z - bw/2 * sin(roll)
+        h = x + (1 - cos(roll)) * bw/2
+        ti = pi/2 - atan2(h, v) - roll
+        hyp = sqrt(v**2 + h**2)
+        x = hyp * cos(ti)
+        z = -hyp * sin(ti)
+
+        print([x, 0, z])
+
+        self.set_leg(0, x, 0, z)
+        # self.set_leg(1, x, 50, z)
+        # self.set_leg(2, x, 50, z)
+        # self.set_leg(3, x, -50, z)
+
     def set_leg(self, id, x, y, z):
         
         # do coordinate system transformations for different legs

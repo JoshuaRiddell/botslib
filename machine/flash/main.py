@@ -10,28 +10,24 @@ def main():
 
     bot = BOTS.Bot()
     sp = spider.Spider(bot)
+    sp.body_xyz(0, 0, -40)
 
     # calibrate_ws = SocketHandlers.Calibrate(bot)
     # controller_ws = SocketHandlers.Controller(sp)
     # setup_web_server(accept_socket_cb)
 
-    r = range(40)
-    update = sp.body_xyz
 
-    while True:
-        for v in r:
-            update(-20, v-20, -70)
+    # for v in r:
+    #     update(-20, v-20, -70)
 
-        for v in r:
-            update(v-20, 20, -70)
+    # for v in r:
+    #     update(v-20, 20, -70)
 
-        for v in r:
-            update(20, 20-v, -70)
+    # for v in r:
+    #     update(20, 20-v, -70)
 
-        for v in r:
-            update(20-v, -20, -70)
-
-        time.sleep(5)
+    # for v in r:
+    #     update(20-v, -20, -70)
 
     # time.sleep(1)
     # bot.servo.reset_position()

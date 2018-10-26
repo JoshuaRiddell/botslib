@@ -129,7 +129,8 @@ class Servo(object):
         else:
             self.load_calib_from_file(SERVO_CALIBRATION_FILE)
         
-        self.reset_position()
+        # init the PWM generating chip
+        self._init_pca()
 
     def load_calib_from_file(self, filename):
         with open(filename, 'r') as fd:
@@ -140,10 +141,6 @@ class Servo(object):
                 vals[1] = float(vals[1])
 
                 self.zero_pos[vals[0]] = vals[1]
-
-                # init the PWM generating chip
-                self._init_pca()
-                self.reset_position()
 
     def set_calib(self, zero_pos):
         self.zero_pos = zero_pos[:]
@@ -160,10 +157,8 @@ class Servo(object):
 
     def reset_position(self):
         "Reset all servo positions to 0 degrees."
-        r = range(16)
-        f = self.set_rad
-        for servo in r:  # set all servos to popsition 0
-            f(servo, 0)
+        for servo in range(16):  # set all servos to popsition 0
+            self.set_rad(servo, 0)
 
     def get_all(self):
         return self.current_pos
