@@ -44,41 +44,47 @@ class Spider(object):
         self.z = z
     
     def body_rpy(self, roll, pitch, yaw):
+        [x, y, z] = self.calc_roll_pitch(roll, pitch)
+        self.set_leg(0, x, -y, z)
+        print([x, y, z])
 
+        [x, y, z] = self.calc_roll_pitch(roll, -pitch)
+        self.set_leg(1, x, y, z)
+        print([x, y, z])
+
+        [x, y, z] = self.calc_roll_pitch(-roll, -pitch)
+        self.set_leg(2, -x, y, z)
+        print([x, y, z])
+
+        [x, y, z] = self.calc_roll_pitch(-roll, pitch)
+        self.set_leg(3, -x, -y, z)
+        print([x, y, z])
+
+
+    def calc_roll_pitch(self, roll, pitch):
         z = -self.z
         x = 70
+        y = 50
 
-        v = z - bw/2 * sin(roll)
+        v1 = z - bl/2 * sin(pitch)
+        hy = y + (1 - cos(pitch)) * bl/2
+
+        v2 = v1 - bw/2 * sin(roll)
         h = x + (1 - cos(roll)) * bw/2
-        ti = pi/2 - atan2(h, v) - roll
-        hyp = sqrt(v**2 + h**2)
+        ti = pi/2 - atan2(h, v2) - roll
+        hyp = sqrt(v2**2 + h**2)
         x = hyp * cos(ti)
         z = -hyp * sin(ti)
 
-        print(hyp, ti)
-        print(h, v)
-        print([x, 0, z])
+        ti = pi/2 - atan2(hy, v2) - pitch
+        hyp = sqrt(v2**2 + hy**2)
+        y = hyp * cos(ti)
 
-        self.set_leg(0, x, -50, z)
-        self.set_leg(1, x, 50, z)
+        return [x, y, z]
 
-        z = -self.z
-        x = 70
-
-        v = z + bw/2 * sin(roll)
-        h = x + (1 - cos(roll)) * bw/2
-        ti = pi/2 - atan2(h, v) + roll
-        hyp = sqrt(v**2 + h**2)
-        x = hyp * cos(ti)
-        z = -hyp * sin(ti)
-        self.set_leg(2, -x, 50, z)
-        self.set_leg(3, -x, -50, z)
-
-        print(hyp, ti)
-        print(h, v)
-        print([-x, 0, z])
-
-
+        # print(hyp, ti)
+        # print(h, v)
+        # print([-x, 0, z])
 
     def set_leg(self, id, x, y, z):
         
