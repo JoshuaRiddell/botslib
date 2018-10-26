@@ -55,12 +55,30 @@ class Spider(object):
         x = hyp * cos(ti)
         z = -hyp * sin(ti)
 
+        print(hyp, ti)
+        print(h, v)
         print([x, 0, z])
 
-        self.set_leg(0, x, 0, z)
-        # self.set_leg(1, x, 50, z)
-        # self.set_leg(2, x, 50, z)
-        # self.set_leg(3, x, -50, z)
+        self.set_leg(0, x, -50, z)
+        self.set_leg(1, x, 50, z)
+
+        z = -self.z
+        x = 70
+
+        v = z + bw/2 * sin(roll)
+        h = x + (1 - cos(roll)) * bw/2
+        ti = pi/2 - atan2(h, v) + roll
+        hyp = sqrt(v**2 + h**2)
+        x = hyp * cos(ti)
+        z = -hyp * sin(ti)
+        self.set_leg(2, -x, 50, z)
+        self.set_leg(3, -x, -50, z)
+
+        print(hyp, ti)
+        print(h, v)
+        print([-x, 0, z])
+
+
 
     def set_leg(self, id, x, y, z):
         
@@ -123,8 +141,3 @@ class Spider(object):
         t3 = t23 * t3
 
         return [t1, t2, t3]
-
-if __name__ == "__main__":
-    bot = None
-    spi = Spider(bot)
-    print(spi.leg_ik_deg(120, 0, 10))

@@ -12,6 +12,18 @@ def main():
     sp = spider.Spider(bot)
     sp.body_xyz(0, 0, -40)
 
+    time.sleep(1)
+
+    sp.body_xyz(0, 0, -50)
+
+    time.sleep(1)
+
+    sp.body_rpy(0.1, 0, 0)
+
+    time.sleep(3)
+
+    sp.body_xyz(0, 0, -50)
+
     # calibrate_ws = SocketHandlers.Calibrate(bot)
     # controller_ws = SocketHandlers.Controller(sp)
     # setup_web_server(accept_socket_cb)

@@ -113,7 +113,7 @@ class Servo(object):
     "Class for handling PWM servo driver through the PCA9685 chip."
 
     rad2off = 200/(pi/2)
-    maximum_angle = 1.22173
+    maximum_angle = 1.5708
 
     zero_pos = [0] * NUM_SERVOS
     current_pos = [0] * NUM_SERVOS
@@ -188,6 +188,7 @@ class Servo(object):
         angle += self.zero_pos[servo]
 
         if (abs(angle) > self.maximum_angle):
+            print("servo index: " + str(servo) + ", out of range")
             return
         
         self.current_pos[servo] = angle
