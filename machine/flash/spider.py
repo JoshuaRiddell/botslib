@@ -44,24 +44,24 @@ class Spider(object):
         self.z = z
     
     def body_rpy(self, roll, pitch, yaw):
-        [x, y, z] = self.calc_roll_pitch(roll, pitch)
+        [x, y, z] = self.leg_roll_pitch(roll, pitch, -yaw)
         self.set_leg(0, x, -y, z)
         print([x, y, z])
 
-        [x, y, z] = self.calc_roll_pitch(roll, -pitch)
+        [x, y, z] = self.leg_roll_pitch(roll, -pitch, yaw)
         self.set_leg(1, x, y, z)
         print([x, y, z])
 
-        [x, y, z] = self.calc_roll_pitch(-roll, -pitch)
+        [x, y, z] = self.leg_roll_pitch(-roll, -pitch, -yaw)
         self.set_leg(2, -x, y, z)
         print([x, y, z])
 
-        [x, y, z] = self.calc_roll_pitch(-roll, pitch)
+        [x, y, z] = self.leg_roll_pitch(-roll, pitch, yaw)
         self.set_leg(3, -x, -y, z)
         print([x, y, z])
 
 
-    def calc_roll_pitch(self, roll, pitch):
+    def leg_roll_pitch(self, roll, pitch, yaw):
         z = -self.z
         x = 70
         y = 50
@@ -70,15 +70,34 @@ class Spider(object):
         hy = y + (1 - cos(pitch)) * bl/2
 
         v2 = v1 - bw/2 * sin(roll)
-        h = x + (1 - cos(roll)) * bw/2
-        ti = pi/2 - atan2(h, v2) - roll
-        hyp = sqrt(v2**2 + h**2)
-        x = hyp * cos(ti)
-        z = -hyp * sin(ti)
+        hx = x + (1 - cos(roll)) * bw/2
+        tix = pi/2 - atan2(hx, v2) - roll
+        tiy = pi/2 - atan2(hy, v2) - pitch
 
-        ti = pi/2 - atan2(hy, v2) - pitch
-        hyp = sqrt(v2**2 + hy**2)
-        y = hyp * cos(ti)
+        hypx = sqrt(v2**2 + hx**2)
+        z = -hypx * sin(tix)
+
+        rx = bw/2 * cos(roll) + hx
+        ry = bl/2 * cos(pitch) + hy
+
+        ryaw = atan2(ry, rx)
+        rmag = sqrt(rx**2 + ry**2)
+
+        print(rx, ry)
+
+        ryaw += yaw
+        rx = rmag * sin(ryaw)
+        ry = rmag * cos(ryaw)
+
+        print(rx, ry)
+
+        hx = rx - bw/2 * cos(pitch)
+        hy = ry - bl/2 * cos(roll)
+
+        hypx = sqrt(v2**2 + hx**2)
+        hypy = sqrt(v2**2 + hy**2)
+        x = hypx * cos(tix)
+        y = hypy * cos(tiy)
 
         return [x, y, z]
 
