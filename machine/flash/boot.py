@@ -55,6 +55,7 @@ def setup_wlan():
     return wlan
 
 def setup_web_server(accept_socket_cb):
+    "Setup http webserver."
     mws = MicroWebSrv()
     mws.MaxWebSocketRecvLen = 256
     mws.WebSocketThreaded = False

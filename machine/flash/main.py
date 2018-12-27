@@ -4,11 +4,17 @@ import sys
 from microWebSrv import MicroWebSrv
 
 
-def main():
+def main(wlan):
     global calibrate_ws
     global controller_ws
 
+    # init the bot
     bot = BOTS.Bot()
+    bot.set_wlan(wlan)
+    time.sleep(1)
+    bot.update_display_status()
+
+    # init spider controller
     sp = spider.Spider(bot)
     sp.xyz(0, 0, 0)
 
@@ -48,8 +54,6 @@ def main():
     # if bot.user_sw.pressed():
     #     boot_menu()
 
-    print(bot.battery.read())
-
     return [bot, sp]
 
 # def boot_menu():
@@ -78,7 +82,7 @@ if __name__ == '__main__':
         import spider
         import SocketHandlers
 
-        [bot, spider] = main()
+        [bot, spider] = main(wlan)
 
     except Exception as e:
         sys.print_exception(e)

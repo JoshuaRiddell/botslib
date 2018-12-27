@@ -5,10 +5,14 @@ from struct import pack
 from math import pi, floor, degrees, radians
 from os import listdir
 
+# pin definitions
 BATTERY_SENSE = const(35)
 I2C_SDA = const(27)
 I2C_SCL = const(26)
+BOOT_PIN = const(0)
+USER_PIN = const(25)
 
+# TFT definitions
 TFT_WIDTH = const(160)
 TFT_HEIGHT = const(128)
 MISO = const(19)
@@ -17,11 +21,13 @@ CLK = const(18)
 CS = const(5)
 BACKLIGHT_PIN = const(23)
 
-BOOT_PIN = const(0)
-USER_PIN = const(25)
+# battery low voltage cutoff threshold
+LVC = 6.4
 
+# servos definitions
 NUM_SERVOS = const(16)
 
+# paths
 ASSETS_PATH = "/flash/assets"
 SPLASH_JPG = ASSETS_PATH + "/bots160x120.jpg"
 STATUS_JPG = ASSETS_PATH + "/bots_man.jpg"
@@ -33,7 +39,8 @@ class Bot(object):
 
     def __init__(self):
         "Initialise all peripherals."
-
+        
+        # momentary switches on the board
         self.boot_sw = Switch(BOOT_PIN)
         self.user_sw = Switch(USER_PIN)
 
@@ -50,25 +57,39 @@ class Bot(object):
                       color_bits=16)
         self.tft.image(0, 0, SPLASH_JPG)
 
-        # init battery adc measurement
+        # init battery voltage measurement
         self.battery = Battery(BATTERY_SENSE)
 
         # init i2c
         self.i2c = I2C(0, sda=I2C_SDA, scl=I2C_SCL, speed=1000000)
         self.servo = Servo(self.i2c)
 
-    def set_ap_if(self, ap_if):
-        # save the ap object for later
-        self.ap_if = ap_if
+        # set wlan to be none at first
+        self.wlan = None
+
+    def set_wlan(self, wlan):
+        # save the ap object for later if we want to display the status
+        self.wlan = wlan
 
     def update_display_status(self):
-        # finally show the tft status screen
+        "Show the status of the bot on the TFT display."
+
         self.tft.image(0, 0, STATUS_JPG)
 
+        batt = self.battery.read()
+        if batt < LVC:
+            col = self.tft.RED
+        else:
+            col = self.tft.GREEN
+
         self.tft.text(25, 7, "BATTERY = " +
-                      str(self.battery.read())+"V", color=self.tft.RED)
-        self.tft.text(25, 22, "IP = " +
-                      str(self.ap_if.ifconfig()[0]), color=self.tft.RED)
+                      str(self.battery.read())+"V", color=col)
+
+        if self.wlan is None:
+            self.tft.text(25, 22, "IP = NO CONNECT", color=self.tft.RED)
+        else:
+            self.tft.text(25, 22, "IP = " +
+                        str(self.wlan.ifconfig()[0]), color=self.tft.GREEN)
 
     def deinit(self):
         "Deinit all peripherals."
@@ -157,7 +178,7 @@ class Servo(object):
 
     def reset_position(self):
         "Reset all servo positions to 0 degrees."
-        for servo in range(16):  # set all servos to popsition 0
+        for servo in range(NUM_SERVOS):  # set all servos to popsition 0
             self.set_rad(servo, 0)
 
     def get_all(self):
@@ -203,7 +224,10 @@ class Servo(object):
         self.set_rad(servo, radians(angle))
 
     def deinit(self):
-        self.reset_position()
+        for servo in range(NUM_SERVOS):
+            self.i2c.writeto_mem(self.slave, 0x06 + (servo*4),
+                                 pack('<HH', 0, 0))
+
 
 
 # constants used for accessing registers on screen
