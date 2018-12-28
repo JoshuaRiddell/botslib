@@ -1,6 +1,8 @@
 import time
 import sys
 
+from math import sin, cos, pi
+
 from microWebSrv import MicroWebSrv
 
 
@@ -18,43 +20,37 @@ def main(wlan):
 
     # init spider controller
     sp = spider.Spider(bot)
-    sp.xyz(0, 0, 0)
+    sp.xyz(0, 0, 50)
+# 
+    dt = 0.1
+    freq = 1
 
-    # time.sleep(1)
+    for i in range(600):
+        t0 = time.time()
 
-    # sp.xyz(0, 0, 0)
+        t = i * dt
 
-    # time.sleep(1)
+        x = 10 * cos(t * 2 * pi * freq)
+        y = 10 * cos(t * 2 * pi * freq + pi/2)
 
-    # sp.rpy(0.1, 0, 0)
+        for j in range(4):
+            z = 200 * cos(-t * 2 * pi * freq - 3*pi/4 - pi/2 * j) - 170
+            z = max(0, z)
+            sp.legs[j][2] = -35 + z
 
-    # time.sleep(3)
+            if z > 20:
+                sp.legs[j][1] = sp.legs0[j][1] + 10
 
-    # sp.rpy(0, 0, 0)
-    
+            sp.legs[j][1] -= 3
 
+        sp.xyz(x, y, 50)
+
+        time.sleep(dt - (time.time() - t0))
+
+# 
     calibrate_ws = SocketHandlers.Calibrate(bot)
     # controller_ws = SocketHandlers.Controller(sp)
     setup_web_server(accept_socket_cb)
-
-
-    # for v in r:
-    #     update(-20, v-20, -70)
-
-    # for v in r:
-    #     update(v-20, 20, -70)
-
-    # for v in r:
-    #     update(20, 20-v, -70)
-
-    # for v in r:
-    #     update(20-v, -20, -70)
-
-    # time.sleep(1)
-    # bot.servo.reset_position()
-
-    # if bot.user_sw.pressed():
-    #     boot_menu()
 
     return [bot, sp]
 

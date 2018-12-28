@@ -30,11 +30,18 @@ class Spider(object):
         self.pitch = 0
         self.yaw = 0
 
+        self.legs0 = [
+            [90, -70, -35],
+            [90, 70, -35],
+            [-90, 70, -35],
+            [-90, -70, -35],
+        ]
+
         self.legs = [
-            [110, -60, -35],
-            [110, 60, -35],
-            [-110, 60, -35],
-            [-110, -60, -35],
+            [90, -70, -35],
+            [90, 70, -35],
+            [-90, 70, -35],
+            [-90, -70, -35],
         ]
 
         self.body_offsets = [
@@ -100,8 +107,8 @@ class Spider(object):
     def body_to_leg(self, idx):
         # get offsets for this leg
         leg = self.legs[idx]
-        x = leg[0] - self.y
-        y = leg[1] - self.x
+        x = leg[0] - self.x
+        y = leg[1] - self.y
         z = leg[2] - self.z
 
         # apply body rotation
@@ -119,9 +126,6 @@ class Spider(object):
     def set_leg(self, id, x, y, z):
         # do inverse kinematics
         t1, t2, t3 = self.leg_ik(x, y, z)
-
-        print((x,y,z))
-        print(self.leg_ik_deg(x,y,z))
 
         # write to servos
         r_id = id*4
