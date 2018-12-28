@@ -31,25 +31,27 @@ class Spider(object):
         self.yaw = 0
 
         self.legs = [
-            [130, -50, -35],
-            [130, 50, -35],
-            [-130, 50, -35],
-            [-130, -50, -35],
+            [110, -60, -35],
+            [110, 60, -35],
+            [-110, 60, -35],
+            [-110, -60, -35],
         ]
 
         self.body_offsets = [
             [bw/2,  -bl/2],
             [bw/2,  bl/2],
-            [-bw/2, -bl/2],
             [-bw/2, bl/2],
+            [-bw/2, -bl/2],
         ]
 
+        #   e   m   r
         self.angle_signs = [
-            -1, 1,  1,  0,
+            -1, -1,  -1,  0,
             1,  1,  1,  0,
-            1,  1,  1,  0,
+            -1,  -1,  -1,  0,
             1,  1,  1,  0,
         ]
+
 
     def xyzrpy(self, x, y, z, roll, pitch, yaw):
         self.x = x
@@ -77,24 +79,16 @@ class Spider(object):
     
     def update_body(self):
         [x, y, z] = self.body_to_leg(0)
-        self.set_leg(0, x, y, z)
+        self.set_leg(0, x, -y, z)
 
-        # time.sleep(1)
+        [x, y, z] = self.body_to_leg(1)
+        self.set_leg(1, x, y, z)
 
-        # [x, y, z] = self.body_to_leg(self.x, -self.y, self.z, self.roll, -self.pitch, self.yaw)
-        # self.set_leg(1, x, y, z)
+        [x, y, z] = self.body_to_leg(2)
+        self.set_leg(2, -x, y, z)
 
-        # time.sleep(1)
-
-        # [x, y, z] = self.body_to_leg(-self.x, -self.y, self.z, -self.roll, -self.pitch, -self.yaw)
-        # self.set_leg(2, -x, y, z)
-
-        # time.sleep(1)
-
-        # [x, y, z] = self.body_to_leg(-self.x, self.y, self.z, -self.roll, self.pitch, self.yaw)
-        # self.set_leg(3, -x, -y, z)
-
-        # time.sleep(1)
+        [x, y, z] = self.body_to_leg(3)
+        self.set_leg(3, -x, -y, z)
 
     @staticmethod
     def rot2d(a, x, y):
@@ -113,7 +107,7 @@ class Spider(object):
         # apply body rotation
         x, z = self.rot2d(self.roll, x, z)
         z, y = self.rot2d(self.pitch, z, y)
-        x, y = self.rot2d(self.yaw, x, y)
+        x, y = self.rot2d(-self.yaw, x, y)
 
         # apply offsets due to frame
         o = self.body_offsets[idx]
@@ -159,6 +153,6 @@ class Spider(object):
         # angle of depression to calculate the hip angle
         d = atan2(z, r)
         e = asin(l3 * sin(tk) / rt)
-        t2 = e - d
+        t2 = e + d
 
         return [t1, t2, t3]
