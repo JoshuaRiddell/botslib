@@ -224,6 +224,7 @@ class Servo(object):
         self.set_rad(servo, radians(angle))
 
     def deinit(self):
+        # write 0 ontime to all servos to turn them off
         for servo in range(NUM_SERVOS):
             self.i2c.writeto_mem(self.slave, 0x06 + (servo*4),
                                  pack('<HH', 0, 0))

@@ -14,26 +14,28 @@ def main(wlan):
     time.sleep(1)
     bot.update_display_status()
 
+    # bot.servo.reset_position()
+
     # init spider controller
     sp = spider.Spider(bot)
     sp.xyz(0, 0, 0)
 
-    time.sleep(1)
+    # time.sleep(1)
 
-    sp.xyz(0, 0, 0)
+    # sp.xyz(0, 0, 0)
 
-    time.sleep(1)
+    # time.sleep(1)
 
-    sp.rpy(0.1, 0, 0)
+    # sp.rpy(0.1, 0, 0)
 
-    time.sleep(3)
+    # time.sleep(3)
 
-    sp.rpy(0, 0, 0)
+    # sp.rpy(0, 0, 0)
     
 
-    # calibrate_ws = SocketHandlers.Calibrate(bot)
+    calibrate_ws = SocketHandlers.Calibrate(bot)
     # controller_ws = SocketHandlers.Controller(sp)
-    # setup_web_server(accept_socket_cb)
+    setup_web_server(accept_socket_cb)
 
 
     # for v in r:
@@ -82,7 +84,7 @@ if __name__ == '__main__':
         import spider
         import SocketHandlers
 
-        [bot, spider] = main(wlan)
+        [bot, sp] = main(wlan)
 
     except Exception as e:
         sys.print_exception(e)

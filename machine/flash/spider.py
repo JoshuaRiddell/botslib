@@ -11,7 +11,7 @@ except:
 l1 = const(25)
 l2 = const(48)
 l3 = const(75)
-l4 = const(10)
+l4 = const(10)  # offset of foot to leg axis
 
 bw = const(47)
 bl = const(88)
@@ -30,9 +30,26 @@ class Spider(object):
         self.pitch = 0
         self.yaw = 0
 
-        self.stance_x = 70
-        self.stance_y = 50
-        self.stance_z = -50
+        self.legs = [
+            [130, -50, -35],
+            [130, 50, -35],
+            [-130, 50, -35],
+            [-130, -50, -35],
+        ]
+
+        self.body_offsets = [
+            [bw/2,  -bl/2],
+            [bw/2,  bl/2],
+            [-bw/2, -bl/2],
+            [-bw/2, bl/2],
+        ]
+
+        self.angle_signs = [
+            -1, 1,  1,  0,
+            1,  1,  1,  0,
+            1,  1,  1,  0,
+            1,  1,  1,  0,
+        ]
 
     def xyzrpy(self, x, y, z, roll, pitch, yaw):
         self.x = x
@@ -59,109 +76,89 @@ class Spider(object):
         self.update_body()
     
     def update_body(self):
-        [x, y, z] = self.body_to_leg(self.x, self.y, self.z, self.roll, self.pitch, -self.yaw)
-        self.set_leg(0, x, -y, z)
+        [x, y, z] = self.body_to_leg(0)
+        self.set_leg(0, x, y, z)
 
-        [x, y, z] = self.body_to_leg(self.x, -self.y, self.z, self.roll, -self.pitch, self.yaw)
-        self.set_leg(1, x, y, z)
+        # time.sleep(1)
 
-        [x, y, z] = self.body_to_leg(-self.x, -self.y, self.z, -self.roll, -self.pitch, -self.yaw)
-        self.set_leg(2, -x, y, z)
+        # [x, y, z] = self.body_to_leg(self.x, -self.y, self.z, self.roll, -self.pitch, self.yaw)
+        # self.set_leg(1, x, y, z)
 
-        [x, y, z] = self.body_to_leg(-self.x, self.y, self.z, -self.roll, self.pitch, self.yaw)
-        self.set_leg(3, -x, -y, z)
+        # time.sleep(1)
 
+        # [x, y, z] = self.body_to_leg(-self.x, -self.y, self.z, -self.roll, -self.pitch, -self.yaw)
+        # self.set_leg(2, -x, y, z)
 
-    def body_to_leg(self, x, y, z, roll, pitch, yaw):
-        v1 = -(self.stance_z - z) - bl/2 * sin(pitch)
-        hy = (self.stance_y + y) + (1 - cos(pitch)) * bl/2
+        # time.sleep(1)
 
-        v2 = v1 - bw/2 * sin(roll)
-        hx = (self.stance_x + x) + (1 - cos(roll)) * bw/2
-        tix = pi/2 - atan2(hx, v2) - roll
-        tiy = pi/2 - atan2(hy, v2) - pitch
+        # [x, y, z] = self.body_to_leg(-self.x, self.y, self.z, -self.roll, self.pitch, self.yaw)
+        # self.set_leg(3, -x, -y, z)
 
-        hypx = sqrt(v2**2 + hx**2)
-        z = -hypx * sin(tix)
+        # time.sleep(1)
 
-        rx = bw/2 * cos(roll) + hx
-        ry = bl/2 * cos(pitch) + hy
+    @staticmethod
+    def rot2d(a, x, y):
+        "Optimised 2D rotation matrix application."
+        sa = sin(a)
+        ca = cos(a)
+        return [x*ca - y*sa, x*sa + y*ca]
 
-        ryaw = atan2(ry, rx)
-        rmag = sqrt(rx**2 + ry**2)
+    def body_to_leg(self, idx):
+        # get offsets for this leg
+        leg = self.legs[idx]
+        x = leg[0] - self.y
+        y = leg[1] - self.x
+        z = leg[2] - self.z
 
-        ryaw += yaw
-        rx = rmag * sin(ryaw)
-        ry = rmag * cos(ryaw)
+        # apply body rotation
+        x, z = self.rot2d(self.roll, x, z)
+        z, y = self.rot2d(self.pitch, z, y)
+        x, y = self.rot2d(self.yaw, x, y)
 
-        hx = rx - bw/2 * cos(pitch)
-        hy = ry - bl/2 * cos(roll)
-
-        hypx = sqrt(v2**2 + hx**2)
-        hypy = sqrt(v2**2 + hy**2)
-        x = hypx * cos(tix)
-        y = hypy * cos(tiy)
+        # apply offsets due to frame
+        o = self.body_offsets[idx]
+        x = x - o[0]
+        y = y - o[1]
 
         return [x, y, z]
 
     def set_leg(self, id, x, y, z):
-        
-        # do coordinate system transformations for different legs
-        z = -z
-        if id == 0:
-            o_r = 1
-            t23 = 1
-        elif id == 1:
-            o_r = -1
-            t23 = -1
-        elif id == 2:
-            x = -x
-            y = -y
-            o_r = 1
-            t23 = 1
-        elif id == 3:
-            x = -x
-            y = -y
-            o_r = -1
-            t23 = -1
-
         # do inverse kinematics
-        [t1, t2, t3] = self.leg_ik(x,y,z,o_r=o_r,t23=t23)
-        t3 = -t3
+        t1, t2, t3 = self.leg_ik(x, y, z)
+
+        print((x,y,z))
+        print(self.leg_ik_deg(x,y,z))
 
         # write to servos
         r_id = id*4
-        self.set_servo(r_id, t3)
+        self.set_servo(r_id, t3 * self.angle_signs[r_id])
         r_id += 1
-        self.set_servo(r_id, t2)
+        self.set_servo(r_id, t2 * self.angle_signs[r_id])
         r_id += 1
-        self.set_servo(r_id, t1)
+        self.set_servo(r_id, t1 * self.angle_signs[r_id])
 
     def leg_ik_deg(self, x, y, z, **kwargs):
         return [degrees(x) for x in self.leg_ik(x,y,z, **kwargs)]
 
-    def leg_ik(self, x, y, z, o_r=1, t23=1):
-        t = atan2(y, x) + o_r * pi/2
-        u = [cos(t) * l4, sin(t) * l4]
+    def leg_ik(self, x, y, z):
+        # root angle
+        t1 = atan2(y, x)
 
-        v1 = [x+u[0], y+u[1]]
-        v1_old_mag = sqrt(v1[0]**2 + v1[1]**2)
-        v1_factor = l1 / v1_old_mag
-        v1_mag = v1_old_mag - l1
-        v1 = [v1[0]*v1_factor, v1[1]*v1_factor]
+        # offset from root segment       
+        x = x - cos(t1) * l1
+        y = y - sin(t1) * l1
 
-        t1 = atan2(v1[1], v1[0])
+        # horiztonal and total distance left
+        r = sqrt(x**2 + y**2)
+        rt = sqrt(r**2 + z**2)
 
-        l = sqrt(v1_mag**2 + z**2)
+        # knee angle needed to cover that distance
+        tk = acos((l2**2 + l3**2 - rt**2) / (2 * l2 * l3))
+        t3 = pi - tk
 
-        t_internal = acos((l2**2 + l3**2 - l**2)/(2 * l2 * l3))
-        t_depression = atan2(z, v1_mag)
-        triangle_upper = asin( l3 * sin(t_internal) / l )
-
-        t2 = t_depression - triangle_upper
-        t3 = pi - t_internal
-
-        t2 = t23 * t2
-        t3 = t23 * t3
+        # angle of depression to calculate the hip angle
+        d = atan2(z, r)
+        e = asin(l3 * sin(tk) / rt)
+        t2 = e - d
 
         return [t1, t2, t3]
