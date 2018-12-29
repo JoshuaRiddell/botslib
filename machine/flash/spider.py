@@ -169,19 +169,22 @@ class Spider(object):
         self.walk_t = self.walk_t0
     
     def update_walk(self, x_rate, y_rate, yaw_rate):
-        # wait until dt sconds has elapsed
-        wait_time = self.walk_dt - (time.time() - self.walk_t)
+        # for interrupt mode
+        self.walk_t += self.walk_dt
+
+        # # wait until dt sconds has elapsed
+        # wait_time = self.walk_dt - (time.time() - self.walk_t)
         
-        if wait_time < 0:
-            print("spider dt too small, {} second overrun".format(wait_time))
+        # if wait_time < 0:
+        #     print("spider dt too small, {} second overrun".format(wait_time))
 
-            # just set the time as current and run as fast as we can
-            self.walk_t = time.time()
-        else:
-            time.sleep(wait_time)
+        #     # just set the time as current and run as fast as we can
+        #     self.walk_t = time.time()
+        # else:
+        #     time.sleep(wait_time)
 
-            # update global time counter
-            self.walk_t += self.walk_dt
+        #     # update global time counter
+        #     self.walk_t += self.walk_dt
 
         # get a relative time since we started walking
         t = self.walk_t - self.walk_t0

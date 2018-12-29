@@ -31,19 +31,20 @@ class Calibrate(object):
 class Controller(object):
     def __init__(self, spider):
         self.spider = spider
+        self.x_rate = 0
+        self.y_rate = 0
+        self.yaw_rate = 0
 
     def socket_text_recv_cb(self, webSocket, msg):
-        old_time = utime.ticks_us()
+        # old_time = utime.ticks_us()
         msg_id = msg[0]
         value = msg[1:]
 
         if msg_id == "a":
             axes = value.split(',')
-
-            self.spider.body_xyz(float(axes[2])*35, -float(axes[3])*35, -70)
-
-        time_taken = utime.ticks_us() - old_time
-        # print("updated in: " + str(time_taken))
-        # print("got " + str(msg_id) + " " + str(value))
+            
+            self.x_rate = float(axes[0]) * 20
+            self.y_rate = float(axes[1]) * 20
+            self.yaw_rate = float(axes[2]) / 5.
 
         
