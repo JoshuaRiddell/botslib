@@ -23,7 +23,7 @@ def main(wlan):
     sp.begin_walk()
 
     for i in range(100):
-        sp.update_walk()
+        sp.update_walk(0, 20, 0.1)
     
     sp.end_walk()
 

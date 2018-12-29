@@ -168,7 +168,7 @@ class Spider(object):
         self.walk_t0 = time.time()
         self.walk_t = self.walk_t0
     
-    def update_walk(self):
+    def update_walk(self, x_rate, y_rate, yaw_rate):
         # wait until dt sconds has elapsed
         wait_time = self.walk_dt - (time.time() - self.walk_t)
         
@@ -196,19 +196,33 @@ class Spider(object):
 
         # write leg positions
         for i in range(4):
+            # handle periodic lifting of legs in phase with body lean
             z = 200 * cos(-t * 2 * pi * self.walk_leg_freq - 3*pi/4 - pi/2 * i) - 170
             z = max(0, z)
-            self.legs[i][2] = -35 + z
+            self.legs[i][2] = self.legs0[i][2] + z
 
+            # reset leg position when it is high enough
             if z > 20:
-                self.legs[i][1] = self.legs0[i][1] + 10
+                self.legs[i][0] = self.legs0[i][0]
+                self.legs[i][1] = self.legs0[i][1]
 
-            self.legs[i][1] -= 2.5
+            # apply translational shift to move in the x,y directions
+            self.legs[i][0] -= x_rate * self.walk_dt
+            self.legs[i][1] -= y_rate * self.walk_dt
 
+            # apply rotational shift to yaw in each direction
+            self.legs[i][0], self.legs[i][1] = self.rot2d(yaw_rate*self.walk_dt, self.legs[i][0], self.legs[i][1])
+
+        # write the calculated position to the legs
         self.update_body()
     
     def end_walk(self):
+        # reset all the legs
         self.legs = self.legs0[:][:]
+
+        # reset body lean
         self.x = 0
         self.y = 0
+
+        # write to legs
         self.update_body()
