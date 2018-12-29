@@ -21,45 +21,19 @@ def main(wlan):
     # init spider controller
     sp = spider.Spider(bot)
     sp.xyz(0, 0, 50)
-# 
-    dt = 0.1
-    freq = 1
 
-    for i in range(600):
-        t0 = time.time()
+    sp.begin_walk()
 
-        t = i * dt
+    for i in range(100):
+        sp.update_walk()
+    
+    sp.end_walk()
 
-        x = 10 * cos(t * 2 * pi * freq)
-        y = 10 * cos(t * 2 * pi * freq + pi/2)
-
-        for j in range(4):
-            z = 200 * cos(-t * 2 * pi * freq - 3*pi/4 - pi/2 * j) - 170
-            z = max(0, z)
-            sp.legs[j][2] = -35 + z
-
-            if z > 20:
-                sp.legs[j][1] = sp.legs0[j][1] + 10
-
-            sp.legs[j][1] -= 3
-
-        sp.xyz(x, y, 50)
-
-        time.sleep(dt - (time.time() - t0))
-
-# 
     calibrate_ws = SocketHandlers.Calibrate(bot)
-    # controller_ws = SocketHandlers.Controller(sp)
+    controller_ws = SocketHandlers.Controller(sp)
     setup_web_server(accept_socket_cb)
 
     return [bot, sp]
-
-# def boot_menu():
-#     title = "Boot Menu"
-#     options = ["Servo Calib"]
-
-#     while True:
-#         pass
 
 
 def accept_socket_cb(webSocket, httpClient):

@@ -22,6 +22,9 @@ class Spider(object):
         self.bot = bot
         self.set_servo = bot.servo.set_rad
 
+        self.walk_dt = 0.05
+        self.walk_leg_freq = 1
+
         self.x = 0
         self.y = 0
         self.z = 0
@@ -160,3 +163,44 @@ class Spider(object):
         t2 = e + d
 
         return [t1, t2, t3]
+
+    def begin_walk(self):
+        self.walk_t0 = time.time()
+        self.walk_t = self.walk_t0
+    
+    def update_walk(self):
+        # wait until dt sconds has elapsed
+        time.sleep(self.walk_dt - (time.time() - self.walk_t))
+
+        # update global time counter
+        self.walk_t += self.walk_dt
+
+        # get a relative time since we started walking
+        t = self.walk_t - self.walk_t0
+
+        # get body position in x,y
+        x = 15 * cos(t * 2 * pi * self.walk_leg_freq)
+        y = 15 * cos(t * 2 * pi * self.walk_leg_freq + pi/2)
+
+        # write position to body
+        self.x = x
+        self.y = y
+
+        # write leg positions
+        for i in range(4):
+            z = 200 * cos(-t * 2 * pi * self.walk_leg_freq - 3*pi/4 - pi/2 * i) - 170
+            z = max(0, z)
+            self.legs[i][2] = -35 + z
+
+            if z > 20:
+                self.legs[i][1] = self.legs0[i][1] + 10
+
+            self.legs[i][1] -= 3
+
+        self.update_body()
+    
+    def end_walk(self):
+        self.legs = self.legs0[:][:]
+        self.x = 0
+        self.y = 0
+        self.update_body()
