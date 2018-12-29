@@ -16,8 +16,6 @@ def main(wlan):
     time.sleep(1)
     bot.update_display_status()
 
-    # bot.servo.reset_position()
-
     # init spider controller
     sp = spider.Spider(bot)
     sp.xyz(0, 0, 50)
