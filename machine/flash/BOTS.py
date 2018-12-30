@@ -203,7 +203,6 @@ class Servo(object):
         self.i2c.writeto_mem(self.slave, 0x06 + (servo*4),
                              pack('<HH', on_time, off_time))
 
-
     def set_rad(self, servo, angle):
         "Set the position of servo index to angle in radians."
         angle += self.zero_pos[servo]

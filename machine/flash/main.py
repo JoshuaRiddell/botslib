@@ -29,24 +29,21 @@ def main(wlan):
     # stand up
     sp.xyz(0, 0, 50)
 
-    dt = 50
+    dt = 80
 
     # walk with slow dt
     sp.walk_dt = dt / 1000.
     sp.walk_leg_freq = 0.5
-# 
+
     sp.begin_walk()
 
     tm = Timer(0)
     tm.init(period=dt, mode=tm.PERIODIC, callback=lambda timer: sp.update_walk(controller_ws.x_rate, controller_ws.y_rate, controller_ws.yaw_rate))
     
-    input("Press enter to stop walking...")
-    tm.deinit()
+    # for i in range(100):
+    #     sp.update_walk(0, 0, 0)
 
     # sp.end_walk()
-
-    # for i in range(100):
-    #     sp.update_walk(, controller_ws.y_rate, 0)
 
     return [bot, sp]
 

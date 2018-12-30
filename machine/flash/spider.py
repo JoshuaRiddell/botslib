@@ -1,6 +1,7 @@
 from math import atan2, asin, pi, sin, cos, acos, sqrt, degrees
 import time
 
+
 # to allow importing on non micropython systems
 try:
     NULL = const(10)
@@ -193,6 +194,7 @@ class Spider(object):
         x = 15 * cos(t * 2 * pi * self.walk_leg_freq)
         y = 15 * cos(t * 2 * pi * self.walk_leg_freq + pi/2)
 
+
         # write position to body
         self.x = x
         self.y = y
@@ -200,7 +202,7 @@ class Spider(object):
         # write leg positions
         for i in range(4):
             # handle periodic lifting of legs in phase with body lean
-            z = 200 * cos(-t * 2 * pi * self.walk_leg_freq - 3*pi/4 - pi/2 * i) - 170
+            z = 150 * cos(-t * 2 * pi * self.walk_leg_freq - 3*pi/4 - pi/2 * i) - 120
             z = max(0, z)
             self.legs[i][2] = self.legs0[i][2] + z
 
@@ -219,6 +221,7 @@ class Spider(object):
         # write the calculated position to the legs
         self.update_body()
     
+
     def end_walk(self):
         # reset all the legs
         self.legs = self.legs0[:][:]
