@@ -1,6 +1,7 @@
 from math import atan2, asin, pi, sin, cos, acos, sqrt, degrees
 import time
 
+import cbots
 
 # to allow importing on non micropython systems
 try:
@@ -21,7 +22,10 @@ class Spider(object):
 
     def __init__(self, bot):
         self.bot = bot
-        self.set_servo = bot.servo.set_rad
+
+        cbots.set_i2c(bot.i2c)
+
+        self.set_servo = cbots.set_servo_rad
 
         self.walk_dt = 0.05
         self.walk_leg_freq = 1
@@ -169,6 +173,7 @@ class Spider(object):
         self.walk_t0 = time.time()
         self.walk_t = self.walk_t0
     
+    # @timed_function
     def update_walk(self, x_rate, y_rate, yaw_rate):
         # for interrupt mode
         self.walk_t += self.walk_dt

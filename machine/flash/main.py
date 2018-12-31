@@ -5,6 +5,10 @@ from machine import Timer
 from math import sin, cos, pi
 from microWebSrv import MicroWebSrv
 
+import cbots
+
+import utime
+
 
 def main(wlan):
     global calibrate_ws
@@ -26,19 +30,28 @@ def main(wlan):
     controller_ws = SocketHandlers.Controller(sp)
     setup_web_server(accept_socket_cb)
 
+    # setup cbots
+    cbots.set_i2c(bot.i2c)
+    cbots.begin_walk(0.02, 0.8)
+
+
     # stand up
     sp.xyz(0, 0, 50)
 
-    dt = 80
+    # dt = 40
 
     # walk with slow dt
-    sp.walk_dt = dt / 1000.
-    sp.walk_leg_freq = 0.5
+    # sp.walk_dt = dt / 1000.
+    # sp.walk_leg_freq = 0.5
 
-    sp.begin_walk()
+    # sp.begin_walk()
+
+    uw = cbots.update_walk
 
     tm = Timer(0)
-    tm.init(period=dt, mode=tm.PERIODIC, callback=lambda timer: sp.update_walk(controller_ws.x_rate, controller_ws.y_rate, controller_ws.yaw_rate))
+    tm.init(period=20, mode=tm.PERIODIC, callback=lambda timer: uw(controller_ws.x_rate, controller_ws.y_rate, controller_ws.yaw_rate))
+
+    # bot.servo.deinit()
     
     # for i in range(100):
     #     sp.update_walk(0, 0, 0)

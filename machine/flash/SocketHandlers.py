@@ -43,9 +43,11 @@ class Controller(object):
         if msg_id == "a":
             axes = value.split(',')
             
-            self.x_rate = float(axes[0]) * 15
-            self.y_rate = float(axes[1]) * -15
-            self.yaw_rate = float(axes[2]) / 5.
+
+            self.x_rate = float(axes[0]) * 40
+            self.y_rate = float(axes[1]) * -40
+            self.yaw_rate = float(axes[2]) / 2.
+
 
 
         
