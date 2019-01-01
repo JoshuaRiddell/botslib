@@ -13,6 +13,7 @@ import utime
 def main(wlan):
     global calibrate_ws
     global controller_ws
+    global step_timer
 
     # init the bot
     bot = BOTS.Bot()
@@ -32,7 +33,9 @@ def main(wlan):
 
     # setup cbots
     cbots.set_i2c(bot.i2c)
-    cbots.begin_walk(0.02, 0.8)
+    cbots.begin_walk(0.1, 0.4)
+
+
 
 
     # stand up
@@ -46,10 +49,7 @@ def main(wlan):
 
     # sp.begin_walk()
 
-    uw = cbots.update_walk
-
-    tm = Timer(0)
-    tm.init(period=20, mode=tm.PERIODIC, callback=lambda timer: uw(controller_ws.x_rate, controller_ws.y_rate, controller_ws.yaw_rate))
+    step_timer = Timer(0)
 
     # bot.servo.deinit()
     
@@ -60,6 +60,14 @@ def main(wlan):
 
     return [bot, sp]
 
+
+def start():
+    uw = cbots.update_walk
+    step_timer.init(period=100, mode=step_timer.PERIODIC, callback=lambda timer: uw(controller_ws.x_rate, controller_ws.y_rate, controller_ws.yaw_rate))
+
+def stop():
+    step_timer.deinit()
+    sp.end_walk()
 
 def accept_socket_cb(webSocket, httpClient):
     global calibrate_ws
