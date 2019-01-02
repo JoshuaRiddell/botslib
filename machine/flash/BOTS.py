@@ -1,9 +1,16 @@
 import display
-from machine import I2C, PWM, ADC, Pin
+from machine import I2C, PWM, ADC, Pin, Timer
 from time import sleep, sleep_us
 from struct import pack
 from math import pi, floor, degrees, radians
 from os import listdir
+
+try:
+    import cbots
+    CBOTS_LOADED = True
+except ImportError:
+    # does not exist
+    CBOTS_LOADED = False
 
 # pin definitions
 BATTERY_SENSE = const(35)
@@ -37,7 +44,7 @@ SERVO_CALIBRATION_FILE = "calib.csv"
 class Bot(object):
     "Class to handle all Bot board peripherals."
 
-    def __init__(self):
+    def __init__(self, status_update_timer=0, status_update_rate=1000, use_cbots=False):
         "Initialise all peripherals."
         
         # momentary switches on the board
@@ -67,14 +74,41 @@ class Bot(object):
         # set wlan to be none at first
         self.wlan = None
 
+        # setup periodic timer for status image updating
+        self.update_display_status(initial=True)
+        self.status_tm = Timer(status_update_timer)
+        self.status_tm.init(
+            period=status_update_rate,
+            mode=self.status_tm.PERIODIC,
+            callback=lambda timer: self.update_display_status()
+        )
+
+        if use_cbots:
+            self.setup_cbots()
+    
+    def setup_cbots(self):
+        "Setup required configuration for use of cbots library."
+        if not CBOTS_LOADED:
+            raise ValueError("cbots_used set to true but cbots library was not found.")
+
+        # tell them the i2c object we are using
+        cbots.set_i2c(self.i2c)
+
+        # set the servo calibration
+        # cbots.set_servo_zero_pos(self.servo.zero_pos)
+
+        # change our write servo function to be the c implementations
+        self.servo.set_rad = cbots.set_servo_rad
+
     def set_wlan(self, wlan):
         # save the ap object for later if we want to display the status
         self.wlan = wlan
 
-    def update_display_status(self):
+    def update_display_status(self, initial=False):
         "Show the status of the bot on the TFT display."
 
-        self.tft.image(0, 0, STATUS_JPG)
+        if initial:
+            self.tft.image(0, 0, STATUS_JPG)
 
         batt = self.battery.read()
         if batt < LVC:
@@ -82,13 +116,12 @@ class Bot(object):
         else:
             col = self.tft.GREEN
 
-        self.tft.text(25, 7, "BATTERY = " +
-                      str(self.battery.read())+"V", color=col)
+        self.tft.text(25, 37, "BATT " + str(batt) + "V", color=col)
 
         if self.wlan is None:
-            self.tft.text(25, 22, "IP = NO CONNECT", color=self.tft.RED)
+            self.tft.text(25, 52, "IP   NO CONNECT", color=self.tft.RED)
         else:
-            self.tft.text(25, 22, "IP = " +
+            self.tft.text(25, 52, "IP   " +
                         str(self.wlan.ifconfig()[0]), color=self.tft.GREEN)
 
     def deinit(self):
@@ -126,7 +159,7 @@ class Battery(ADC):
         "Read pin voltage and scale to battery voltage."
 
         voltage = super().read()*0.0057
-        voltage = floor(voltage*10)/10
+        voltage = floor(voltage*100)/100
         return voltage
 
 
@@ -217,10 +250,6 @@ class Servo(object):
         off_time = (servo * 200) + 340 - (int(angle * self.rad2off))
         self.i2c.writeto_mem(self.slave, 0x06 + (servo*4),
                              pack('<HH', on_time, off_time))
-
-        print("packing {} {}".format(on_time, off_time))
-        print(pack('<HH', on_time, off_time))
-        print()
 
     def set_deg(self, servo, angle):
         "Set the position of servo index to angle in degrees."

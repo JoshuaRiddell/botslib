@@ -1,7 +1,12 @@
+from machine import Timer
 from math import atan2, asin, pi, sin, cos, acos, sqrt, degrees
 import time
 
-import cbots
+try:
+    import cspider
+    CSPIDER_LOADED = True
+except ImportError:
+    CSPIDER_LOADED = False
 
 # to allow importing on non micropython systems
 try:
@@ -10,25 +15,28 @@ except:
     print("const() not defined. Defining...")
     const = lambda x: x
 
-l1 = const(25)
-l2 = const(48)
-l3 = const(75)
-l4 = const(10)  # offset of foot to leg axis
+L1 = const(25)
+L2 = const(48)
+L3 = const(75)
+L4 = const(10)  # offset of foot to leg axis
 
-bw = const(47)
-bl = const(88)
+BW = const(47)
+BL = const(88)
 
 class Spider(object):
 
-    def __init__(self, bot):
+    def __init__(self, bot, step_timer=1, use_cspider=False):
         self.bot = bot
 
-        cbots.set_i2c(bot.i2c)
+        self.step_timer = Timer(step_timer)
 
-        self.set_servo = cbots.set_servo_rad
-
-        self.walk_dt = 0.05
-        self.walk_leg_freq = 1
+        if use_cspider:
+            self.setup_cspider()
+        else:
+            self.setup_spider()
+    
+    def setup_spider(self):
+        self.set_servo = self.bot.servo.set_rad
 
         self.x = 0
         self.y = 0
@@ -53,10 +61,10 @@ class Spider(object):
         ]
 
         self.body_offsets = [
-            [bw/2,  -bl/2],
-            [bw/2,  bl/2],
-            [-bw/2, bl/2],
-            [-bw/2, -bl/2],
+            [BW/2,  -BL/2],
+            [BW/2,  BL/2],
+            [-BW/2, BL/2],
+            [-BW/2, -BL/2],
         ]
 
         #   e   m   r
@@ -67,6 +75,13 @@ class Spider(object):
             1,  1,  1,  0,
         ]
 
+    def setup_cspider(self):
+        "Setup the resources to use cspider library."
+        if not CSPIDER_LOADED:
+            raise ValueError("use_cspider true but cspider library was not found.")
+
+        self.begin_walk = cspider.begin_walk
+        self.update_walk = cspider.update_walk
 
     def xyzrpy(self, x, y, z, roll, pitch, yaw):
         self.x = x
@@ -104,13 +119,6 @@ class Spider(object):
 
         [x, y, z] = self.body_to_leg(3)
         self.set_leg(3, -x, -y, z)
-
-    @staticmethod
-    def rot2d(a, x, y):
-        "Optimised 2D rotation matrix application."
-        sa = sin(a)
-        ca = cos(a)
-        return [x*ca - y*sa, x*sa + y*ca]
 
     def body_to_leg(self, idx):
         # get offsets for this leg
@@ -151,30 +159,49 @@ class Spider(object):
         t1 = atan2(y, x)
 
         # offset from root segment       
-        x = x - cos(t1) * l1
-        y = y - sin(t1) * l1
+        x = x - cos(t1) * L1
+        y = y - sin(t1) * L1
 
         # horiztonal and total distance left
         r = sqrt(x**2 + y**2)
         rt = sqrt(r**2 + z**2)
 
         # knee angle needed to cover that distance
-        tk = acos((l2**2 + l3**2 - rt**2) / (2 * l2 * l3))
+        tk = acos((L2**2 + L3**2 - rt**2) / (2 * L2 * L3))
         t3 = pi - tk
 
         # angle of depression to calculate the hip angle
         d = atan2(z, r)
-        e = asin(l3 * sin(tk) / rt)
+        e = asin(L3 * sin(tk) / rt)
         t2 = e + d
 
         return [t1, t2, t3]
 
-    def begin_walk(self):
+    def begin_walk(self, update_rate):
+        self.walk_leg_freq = 1
+
+        self.walk_dt = update_rate / 1000
+
+        self.step_timer.init(
+            period=update_rate,
+            mode=self.status_tm.PERIODIC,
+            callback=lambda timer: self.update_walk()
+        )
+
         self.walk_t0 = time.time()
         self.walk_t = self.walk_t0
     
-    # @timed_function
-    def update_walk(self, x_rate, y_rate, yaw_rate):
+    def set_walk_params(self, x_rate, y_rate, yaw_rate):
+        self.x_rate = x_rate
+        self.y_rate = y_rate
+        self.yaw_rate = yaw_rate
+
+    def update_walk(self):
+        # update walk
+        x_rate = self.x_rate
+        y_rate = self.y_rate
+        yaw_rate = self.yaw_rate
+        
         # for interrupt mode
         self.walk_t += self.walk_dt
 
@@ -237,3 +264,10 @@ class Spider(object):
 
         # write to legs
         self.update_body()
+
+    @staticmethod
+    def rot2d(a, x, y):
+        "Optimised 2D rotation matrix application."
+        sa = sin(a)
+        ca = cos(a)
+        return [x*ca - y*sa, x*sa + y*ca]

@@ -2,13 +2,7 @@ import time
 import sys
 
 from machine import Timer
-from math import sin, cos, pi
 from microWebSrv import MicroWebSrv
-
-import cbots
-
-import utime
-
 
 def main(wlan):
     global calibrate_ws
@@ -16,9 +10,8 @@ def main(wlan):
     global step_timer
 
     # init the bot
-    bot = BOTS.Bot()
+    bot = BOTS.Bot(use_cbots=True)
     bot.set_wlan(wlan)
-    bot.update_display_status()
 
     if bot.user_sw.pressed():
         return None, None
@@ -31,15 +24,18 @@ def main(wlan):
     controller_ws = SocketHandlers.Controller(sp)
     setup_web_server(accept_socket_cb)
 
-    # setup cbots
-    cbots.set_i2c(bot.i2c)
-    cbots.begin_walk(0.1, 0.4)
-
-
-
-
     # stand up
-    sp.xyz(0, 0, 50)
+    sp.xyz(0, 0, 40)
+
+    # setup timer for stepping
+    step_timer = Timer(1)
+
+
+
+
+
+    # cbots.begin_walk(0.1, 0.4)
+
 
     # dt = 40
 
@@ -49,7 +45,6 @@ def main(wlan):
 
     # sp.begin_walk()
 
-    step_timer = Timer(0)
 
     # bot.servo.deinit()
     
@@ -62,7 +57,7 @@ def main(wlan):
 
 
 def start():
-    uw = cbots.update_walk
+    uw = sp.update_walk
     step_timer.init(period=100, mode=step_timer.PERIODIC, callback=lambda timer: uw(controller_ws.x_rate, controller_ws.y_rate, controller_ws.yaw_rate))
 
 def stop():

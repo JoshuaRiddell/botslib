@@ -1,10 +1,9 @@
 import BOTS
 import utime
 
+
 class Calibrate(object):
-
     current_id = 0
-
     def __init__(self, bot):
         self.current_id = 0
         self.bot = bot
@@ -28,26 +27,22 @@ class Calibrate(object):
                 for row in rows:
                     fd.write(",".join(row) + "\n")
 
+
 class Controller(object):
     def __init__(self, spider):
         self.spider = spider
-        self.x_rate = 0
-        self.y_rate = 0
-        self.yaw_rate = 0
 
     def socket_text_recv_cb(self, webSocket, msg):
-        # old_time = utime.ticks_us()
         msg_id = msg[0]
         value = msg[1:]
 
         if msg_id == "a":
             axes = value.split(',')
             
+            x_rate = float(axes[0]) * 40
+            y_rate = float(axes[1]) * -40
+            yaw_rate = float(axes[2]) / 2.
 
-            self.x_rate = float(axes[0]) * 40
-            self.y_rate = float(axes[1]) * -40
-            self.yaw_rate = float(axes[2]) / 2.
-
-
+            self.spider.set_walk_params(x_rate, y_rate, yaw_rate)
 
         

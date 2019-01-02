@@ -15,9 +15,8 @@ window.addEventListener("gamepadconnected", function(e) {
     console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
         e.gamepad.index, e.gamepad.id,
         e.gamepad.buttons.length, e.gamepad.axes.length);
-    window.setInterval(gamepad_poll, 200);
+    window.setInterval(gamepad_poll, 500);
 });
-
 
 window.addEventListener("gamepaddisconnected", function(e) {
     console.log("Gamepad disconnected.");
