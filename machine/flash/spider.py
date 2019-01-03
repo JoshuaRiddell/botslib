@@ -59,7 +59,6 @@ class Spider(object):
 
         self.legs = [row[:] for row in self.legs0]
 
-
         self.body_offsets = [
             [BW/2,  -BL/2],
             [BW/2,  BL/2],

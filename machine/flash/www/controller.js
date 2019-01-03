@@ -5,6 +5,10 @@ var pad1x;
 var pad1y;
 var pad2x;
 var pad2y;
+var trig_l;
+var trig_r;
+
+var walk_status;
 
 window.addEventListener("load", init, false);
 window.addEventListener('beforeunload', function (e) {
@@ -15,7 +19,7 @@ window.addEventListener("gamepadconnected", function(e) {
     console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
         e.gamepad.index, e.gamepad.id,
         e.gamepad.buttons.length, e.gamepad.axes.length);
-    window.setInterval(gamepad_poll, 500);
+    window.setInterval(gamepad_poll, 50);
 });
 
 window.addEventListener("gamepaddisconnected", function(e) {
@@ -29,30 +33,60 @@ function gamepad_poll() {
     var val1y = Math.round(gamepad.axes[1] * 100) / 100;
     var val2x = Math.round(gamepad.axes[2] * 100) / 100;
     var val2y = Math.round(gamepad.axes[3] * 100) / 100;
+    var val3 = Math.round(gamepad.buttons[6].value * 100) / 100;
+    var val4 = Math.round(gamepad.buttons[7].value * 100) / 100;
 
     pad1x.innerHTML = val1x;
     pad1y.innerHTML = val1y;
     pad2x.innerHTML = val2x;
     pad2y.innerHTML = val2y;
-
-    console.log(val1x);
-    console.log(val1y);
-    console.log(val2x);
-    console.log(val2y);
+    trig_l.innerHTML = val3;
+    trig_r.innerHTML = val4;
 
     socket_send(
-        "a" + val1x + "," + val1y + "," + val2x + "," + val2y
+        "a" + val1x + "," + val1y + "," + val2x + "," + val2y + "," + val3 + "," + val4
     );
 }
-// 
+
 function init() {
     connection_status = document.getElementById("connection_status");
     pad1x = document.getElementById("pad1x");
     pad1y = document.getElementById("pad1y");
     pad2x = document.getElementById("pad2x");
     pad2y = document.getElementById("pad2y");
+    trig_l = document.getElementById("trig_l");
+    trig_r = document.getElementById("trig_r");
+
+    walk_status = document.getElementById("walk_status");
+    var start_button = document.getElementById("start_button");
+    var stop_button = document.getElementById("stop_button");
     
+    start_button.onclick = function () {
+        walk_status.innerHTML = "On";
+        socket_send("s");
+    }
+
+    stop_button.onclick = function () {
+        walk_status.innerHTML = "Off";
+        socket_send("x");
+    }
+
     attach_socket();
+
+    var connect_button = document.getElementById("connect_button");
+    var disconnect_button = document.getElementById("disconnect_button");
+
+    connect_button.onclick = function() {
+        if (websocket.readyState == 3) {
+            attach_socket();
+        }
+    }
+
+    disconnect_button.onclick = function() {
+        if (websocket.readyState == 1) {
+            websocket.close();
+        }
+    }
 }
 
 function attach_socket() {
@@ -82,7 +116,9 @@ function onError(evt) {
 }
 
 function socket_send(msg) {
-    websocket.send(msg);
+    if (websocket.readyState == 1) {
+        websocket.send(msg);
+    }
 }
 
 function update_connection_status(s) {

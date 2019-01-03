@@ -19,6 +19,7 @@ def main(wlan):
     # init spider controller
     sp = spider.Spider(bot, use_cspider=True)
 
+
     # setup web server
     calibrate_ws = SocketHandlers.Calibrate(bot)
     controller_ws = SocketHandlers.Controller(sp)
@@ -49,12 +50,6 @@ def main(wlan):
     return [bot, sp]
 
 
-def start():
-    sp.start_walk()
-
-def stop():
-    sp.stop_walk()
-
 def accept_socket_cb(webSocket, httpClient):
     global calibrate_ws
     global controller_ws
@@ -74,7 +69,6 @@ if __name__ == '__main__':
         import SocketHandlers
 
         [bot, sp] = main(wlan)
-        # start()
 
     except Exception as e:
         sys.print_exception(e)

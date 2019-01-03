@@ -10,16 +10,30 @@
 <script src="controller.js"></script>
 
 <body>
-    <h1>Calibrate Servos</h1>
+    <h1>Gamepad Controller</h1>
 
-    <h2>Connection Status:</h2>
-    <div id="connection_status"></div>
-
+    <h2>Controller Debug:</h2>    
     <div>
         <p>Pad 1: <span id="pad1x"></span>,  <span id="pad1y"></span></p>
         <p>Pad 2: <span id="pad2x"></span>,  <span id="pad2y"></span></p>
+        <p>Trigger Left: <span id="trig_l"></span>, Trigger Right <span id="trig_r"></span></p>
+    </div>
+
+    <h2>Walking Control Panel:</h2>    
+    <div>
+        <p>Walk Status: <span id="walk_status"></span></p>
+        <button id="start_button">START</button> <button id="stop_button">STOP</button> 
+    </div>
+
+    <h2>Websockets Connection:</h2>
+    <div>
+        <button id="disconnect_button">DISCONNECT</button> <button id="connect_button">CONNECT</button>
+
+        <h3>Status:</h3>
+        <div id="connection_status"></div>
     </div>
 
 </body>
+
 
 </html>
