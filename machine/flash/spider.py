@@ -10,7 +10,7 @@ except ImportError:
 
 # to allow importing on non micropython systems
 try:
-    NULL = const(10)
+    _CONST_TEST_VAR = const(10)
 except:
     print("const() not defined. Defining...")
     const = lambda x: x
@@ -23,12 +23,23 @@ L4 = const(10)  # offset of foot to leg axis
 BW = const(47)
 BL = const(88)
 
+STANCE_WIDTH = const(140)
+STANCE_LENGTH = const(180)
+STANCE_HEIGHT = const(35)
+
 class Spider(object):
 
     def __init__(self, bot, step_timer=1, use_cspider=False):
         self.bot = bot
 
         self.step_timer = Timer(step_timer)
+
+        self.legs0 = [
+            [STANCE_LENGTH/2, -STANCE_WIDTH/2, -STANCE_HEIGHT],
+            [STANCE_LENGTH/2, STANCE_WIDTH/2, -STANCE_HEIGHT],
+            [-STANCE_LENGTH/2, STANCE_WIDTH/2, -STANCE_HEIGHT],
+            [-STANCE_LENGTH/2, -STANCE_WIDTH/2, -STANCE_HEIGHT],
+        ]
 
         if use_cspider:
             self.setup_cspider()
@@ -46,19 +57,8 @@ class Spider(object):
         self.pitch = 0
         self.yaw = 0
 
-        self.legs0 = [
-            [90, -70, -35],
-            [90, 70, -35],
-            [-90, 70, -35],
-            [-90, -70, -35],
-        ]
+        self.legs = [row[:] for row in self.legs0]
 
-        self.legs = [
-            [90, -70, -35],
-            [90, 70, -35],
-            [-90, 70, -35],
-            [-90, -70, -35],
-        ]
 
         self.body_offsets = [
             [BW/2,  -BL/2],
@@ -80,8 +80,19 @@ class Spider(object):
         if not CSPIDER_LOADED:
             raise ValueError("use_cspider true but cspider library was not found.")
 
+        # body placement functions
+        self.xyz = cspider.xyz
+        self.rpy = cspider.rpy
+        self.xyzrpy = cspider.xyzrpy
+        self.update_body = cspider.update_body
+
+        # walking functions
         self.begin_walk = cspider.begin_walk
         self.update_walk = cspider.update_walk
+        self.update_walk_params = cspider.update_walk_params
+
+        # pass through legs0 stance coordinates
+        cspider.set_legs0(self.legs0)
 
     def xyzrpy(self, x, y, z, roll, pitch, yaw):
         self.x = x
@@ -177,21 +188,18 @@ class Spider(object):
 
         return [t1, t2, t3]
 
-    def begin_walk(self, update_rate):
-        self.walk_leg_freq = 1
-
-        self.walk_dt = update_rate / 1000
-
-        self.step_timer.init(
-            period=update_rate,
-            mode=self.status_tm.PERIODIC,
-            callback=lambda timer: self.update_walk()
-        )
+    def begin_walk(self, dt, freq):
+        self.walk_leg_freq = freq
+        self.walk_dt = dt
 
         self.walk_t0 = time.time()
         self.walk_t = self.walk_t0
+
+        self.x_rate = 0
+        self.y_rate = 0
+        self.yaw_rate = 0
     
-    def set_walk_params(self, x_rate, y_rate, yaw_rate):
+    def update_walk_rates(self, x_rate, y_rate, yaw_rate):
         self.x_rate = x_rate
         self.y_rate = y_rate
         self.yaw_rate = yaw_rate
@@ -225,7 +233,6 @@ class Spider(object):
         # get body position in x,y
         x = 15 * cos(t * 2 * pi * self.walk_leg_freq)
         y = 15 * cos(t * 2 * pi * self.walk_leg_freq + pi/2)
-
 
         # write position to body
         self.x = x
@@ -264,6 +271,19 @@ class Spider(object):
 
         # write to legs
         self.update_body()
+
+    def start_walk(self):
+        self.begin_walk(0.1, 0.1)
+
+        self.step_timer.init(
+            period=100,
+            mode=self.step_timer.PERIODIC,
+            callback=lambda timer: self.update_walk()
+        )
+
+    def stop_walk(self):
+        self.step_timer.deinit()
+        self.end_walk()
 
     @staticmethod
     def rot2d(a, x, y):

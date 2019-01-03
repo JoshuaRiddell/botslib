@@ -95,7 +95,7 @@ class Bot(object):
         cbots.set_i2c(self.i2c)
 
         # set the servo calibration
-        # cbots.set_servo_zero_pos(self.servo.zero_pos)
+        cbots.set_servo_zero_pos(self.servo.zero_pos)
 
         # change our write servo function to be the c implementations
         self.servo.set_rad = cbots.set_servo_rad
@@ -116,12 +116,12 @@ class Bot(object):
         else:
             col = self.tft.GREEN
 
-        self.tft.text(25, 37, "BATT " + str(batt) + "V", color=col)
+        self.tft.text(25, 40, "BATT " + str(batt) + "V  ", color=col)
 
         if self.wlan is None:
-            self.tft.text(25, 52, "IP   NO CONNECT", color=self.tft.RED)
+            self.tft.text(25, 55, "IP     NO CONNECT", color=self.tft.RED)
         else:
-            self.tft.text(25, 52, "IP   " +
+            self.tft.text(25, 55, "IP     " +
                         str(self.wlan.ifconfig()[0]), color=self.tft.GREEN)
 
     def deinit(self):
@@ -260,7 +260,6 @@ class Servo(object):
         for servo in range(NUM_SERVOS):
             self.i2c.writeto_mem(self.slave, 0x06 + (servo*4),
                                  pack('<HH', 0, 0))
-
 
 
 # constants used for accessing registers on screen

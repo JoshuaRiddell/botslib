@@ -17,7 +17,7 @@ def main(wlan):
         return None, None
 
     # init spider controller
-    sp = spider.Spider(bot)
+    sp = spider.Spider(bot, use_cspider=True)
 
     # setup web server
     calibrate_ws = SocketHandlers.Calibrate(bot)
@@ -26,13 +26,6 @@ def main(wlan):
 
     # stand up
     sp.xyz(0, 0, 40)
-
-    # setup timer for stepping
-    step_timer = Timer(1)
-
-
-
-
 
     # cbots.begin_walk(0.1, 0.4)
 
@@ -57,12 +50,10 @@ def main(wlan):
 
 
 def start():
-    uw = sp.update_walk
-    step_timer.init(period=100, mode=step_timer.PERIODIC, callback=lambda timer: uw(controller_ws.x_rate, controller_ws.y_rate, controller_ws.yaw_rate))
+    sp.start_walk()
 
 def stop():
-    step_timer.deinit()
-    sp.end_walk()
+    sp.stop_walk()
 
 def accept_socket_cb(webSocket, httpClient):
     global calibrate_ws
@@ -83,6 +74,7 @@ if __name__ == '__main__':
         import SocketHandlers
 
         [bot, sp] = main(wlan)
+        # start()
 
     except Exception as e:
         sys.print_exception(e)
