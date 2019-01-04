@@ -22,7 +22,10 @@
     <h2>Walking Control Panel:</h2>    
     <div>
         <p>Walk Status: <span id="walk_status"></span></p>
-        <button id="start_button">START</button> <button id="stop_button">STOP</button> 
+        <button id="start_button">START</button> <button id="stop_button">STOP</button>
+
+        <p>z Height (mm): <span id="z_height_readout"></span></p>
+        <input type="range" min="10" max="60" value="40" id="z_height_slider">
     </div>
 
     <h2>Websockets Connection:</h2>

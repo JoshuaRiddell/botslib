@@ -27,6 +27,8 @@ STANCE_WIDTH = const(140)
 STANCE_LENGTH = const(180)
 STANCE_HEIGHT = const(35)
 
+Z = const(30)
+
 class Spider(object):
 
     def __init__(self, bot, step_timer=1, use_cspider=False):
@@ -191,12 +193,14 @@ class Spider(object):
         self.walk_leg_freq = freq
         self.walk_dt = dt
 
-        self.walk_t0 = time.time()
-        self.walk_t = self.walk_t0
+        self.walk_t = 0
 
         self.x_rate = 0
         self.y_rate = 0
         self.yaw_rate = 0
+
+        self.decimator = 0
+        self.step_lock = 0
     
     def update_walk_rates(self, x_rate, y_rate, yaw_rate):
         self.x_rate = x_rate
@@ -204,57 +208,47 @@ class Spider(object):
         self.yaw_rate = yaw_rate
 
     def update_walk(self):
+        self.decimator += 1
+
         # update walk
         x_rate = self.x_rate
         y_rate = self.y_rate
         yaw_rate = self.yaw_rate
-        
+
         # for interrupt mode
         self.walk_t += self.walk_dt
 
-        # # wait until dt sconds has elapsed
-        # wait_time = self.walk_dt - (time.time() - self.walk_t)
-        
-        # if wait_time < 0:
-        #     print("spider dt too small, {} second overrun".format(wait_time))
-
-        #     # just set the time as current and run as fast as we can
-        #     self.walk_t = time.time()
-        # else:
-        #     time.sleep(wait_time)
-
-        #     # update global time counter
-        #     self.walk_t += self.walk_dt
-
-        # get a relative time since we started walking
-        t = self.walk_t - self.walk_t0
-
-        # get body position in x,y
-        x = 15 * cos(t * 2 * pi * self.walk_leg_freq)
-        y = 15 * cos(t * 2 * pi * self.walk_leg_freq + pi/2)
-
-        # write position to body
-        self.x = x
-        self.y = y
-
         # write leg positions
         for i in range(4):
-            # handle periodic lifting of legs in phase with body lean
-            z = 150 * cos(-t * 2 * pi * self.walk_leg_freq - 3*pi/4 - pi/2 * i) - 120
-            z = max(0, z)
-            self.legs[i][2] = self.legs0[i][2] + z
+            if self.decimator % 4 == 0:
+                r = sqrt((self.legs[i][0] - self.legs0[i][0])**2 + (self.legs[i][1] - self.legs0[i][1])**2)
 
-            # reset leg position when it is high enough
-            if z > 20:
-                self.legs[i][0] = self.legs0[i][0]
-                self.legs[i][1] = self.legs0[i][1]
+                if r > 25 and self.step_lock == 0:
+                    self.step_lock = 1
 
-            # apply translational shift to move in the x,y directions
-            self.legs[i][0] -= x_rate * self.walk_dt
-            self.legs[i][1] -= y_rate * self.walk_dt
+                    self.legs[i][2] = self.legs0[i][2] + Z
 
-            # apply rotational shift to yaw in each direction
-            self.legs[i][0], self.legs[i][1] = self.rot2d(yaw_rate*self.walk_dt, self.legs[i][0], self.legs[i][1])
+                print("{}: {}".format(i, r))
+
+                if self.legs[i][2] > self.legs0[i][2] + Z/2:
+                    if self.legs[i][0] == self.legs0[i][0] and self.legs[i][1] == self.legs0[i][1]:
+                        self.legs[i][2] = self.legs0[i][2]
+                        self.step_lock = 0
+                        
+                    else:
+                        self.legs[i][0] = self.legs0[i][0]
+                        self.legs[i][1] = self.legs0[i][1]
+
+            if self.legs[i][2] <= self.legs0[i][2] + Z/2:
+                # apply translational shift to move in the x,y directions
+                self.legs[i][0] -= x_rate * self.walk_dt
+                self.legs[i][1] -= y_rate * self.walk_dt
+
+                # apply rotational shift to yaw in each direction
+                self.legs[i][0], self.legs[i][1] = self.rot2d(yaw_rate*self.walk_dt, self.legs[i][0], self.legs[i][1])
+
+        if self.decimator % 10 == 0:
+            print("")
 
         # write the calculated position to the legs
         self.update_body()
@@ -262,7 +256,7 @@ class Spider(object):
 
     def end_walk(self):
         # reset all the legs
-        self.legs = self.legs0[:][:]
+        self.legs = [row[:] for row in self.legs0]
 
         # reset body lean
         self.x = 0

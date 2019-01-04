@@ -8,6 +8,9 @@ var pad2y;
 var trig_l;
 var trig_r;
 
+var z_height_slider;
+var z_height_readout;
+
 var walk_status;
 
 window.addEventListener("load", init, false);
@@ -19,8 +22,9 @@ window.addEventListener("gamepadconnected", function(e) {
     console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
         e.gamepad.index, e.gamepad.id,
         e.gamepad.buttons.length, e.gamepad.axes.length);
-    window.setInterval(gamepad_poll, 50);
+    window.setInterval(gamepad_poll, 100);
 });
+
 
 window.addEventListener("gamepaddisconnected", function(e) {
     console.log("Gamepad disconnected.");
@@ -43,8 +47,22 @@ function gamepad_poll() {
     trig_l.innerHTML = val3;
     trig_r.innerHTML = val4;
 
+    if (Math.abs(val1y) < 0.55) {
+        val1y = 0;
+    }
+
+    if (Math.abs(val1x) < 0.1) {
+        val1x = 0;
+    }
+    if (Math.abs(val2x) < 0.1) {
+        val2x = 0;
+    }
+    if (Math.abs(val2y) < 0.1) {
+        val2y = 0;
+    }
+
     socket_send(
-        "a" + val1x + "," + val1y + "," + val2x + "," + val2y + "," + val3 + "," + val4
+        "a" + val1x + "," + val1y + "," + z_height_slider.value + "," + val2x + "," + val2y + "," + val3 + "," + val4
     );
 }
 
@@ -86,6 +104,13 @@ function init() {
         if (websocket.readyState == 1) {
             websocket.close();
         }
+    }
+
+    z_height_slider = document.getElementById("z_height_slider");
+    z_height_readout = document.getElementById("z_height_readout");
+
+    z_height_slider.oninput = function () {
+        z_height_readout.innerHTML = this.value;
     }
 }
 
