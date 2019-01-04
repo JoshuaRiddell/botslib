@@ -29,6 +29,13 @@ STANCE_HEIGHT = const(35)
 
 Z = const(30)
 
+STATE_STEP_IDLE = const(0)
+STATE_STEP_MOVING = const(1)
+STATE_STEP_STEPPING = const(2)
+STATE_STEP_RETURNING = const(3)
+
+LEG_STEP_THRESHOLD = const(30)
+
 class Spider(object):
 
     def __init__(self, bot, step_timer=1, use_cspider=False):
@@ -193,12 +200,13 @@ class Spider(object):
         self.walk_leg_freq = freq
         self.walk_dt = dt
         
-        self.move_time = 1
-        self.step_time = 1
+
+        self.move_time = 0.5
+        self.step_time = 0.2
         self.step_period = self.move_time + self.step_time
 
         self.walk_t = 0
-        self.last_step_t = 0
+        self.last_step_t = -100
         self.state_t0 = 0
 
         self.step_state = 0
@@ -215,15 +223,6 @@ class Spider(object):
         self.x_rate = x_rate
         self.y_rate = y_rate
         self.yaw_rate = yaw_rate
-
-
-STATE_STEP_IDLE = const(0)
-STATE_STEP_MOVING = const(1)
-STATE_STEP_STEPPING = const(2)
-STATE_STEP_RETURNING = const(3)
-
-LEG_STEP_THRESHOLD = const(20)
-
 
     def get_centroid(self):
         # calculate centroid
@@ -247,7 +246,7 @@ LEG_STEP_THRESHOLD = const(20)
         max_leg_diff = 0
         max_leg_index = 0
         for i in range(4):
-            r = (legs[i][0] - legs0[i][0])**2 + (legs[i][1] - legs[i][1])**2
+            r = (self.legs[i][0] - self.legs0[i][0])**2 + (self.legs[i][1] - self.legs0[i][1])**2
 
             if r > max_leg_diff:
                 max_leg_diff = r
@@ -258,6 +257,25 @@ LEG_STEP_THRESHOLD = const(20)
             return max_leg_index
         
         return -1
+
+    @staticmethod
+    def sign(x1, y1, x2, y2, x3, y3):
+        return (x1 - x3) * (y2 - y3) - (x2 - x3) * (y1- y3)
+
+    def cg_in_legs(self):
+        ids = list(range(4))
+        ids.pop(self.step_leg)
+
+        l = self.legs
+
+        d1 = self.sign(self.x, self.y, l[ids[0]][0], l[ids[0]][1], l[ids[1]][0], l[ids[1]][1])
+        d2 = self.sign(self.x, self.y, l[ids[1]][0], l[ids[1]][1], l[ids[2]][0], l[ids[2]][1])
+        d3 = self.sign(self.x, self.y, l[ids[2]][0], l[ids[2]][1], l[ids[0]][0], l[ids[0]][1])
+
+        has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0)
+        has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
+
+        return not (has_neg and has_pos)
 
     def update_walk(self):
         # update walk
@@ -270,7 +288,7 @@ LEG_STEP_THRESHOLD = const(20)
         t = self.walk_t
 
         step_state = self.step_state
-        state_t = self.state_t0 - t
+        state_t = t - self.state_t0
 
         if step_state == STATE_STEP_IDLE:
             # check if it's been long enough since the last step
@@ -281,9 +299,15 @@ LEG_STEP_THRESHOLD = const(20)
                 if step_leg_idx != -1:
                     self.step_leg = step_leg_idx
                     self.step_state = STATE_STEP_MOVING
+                    self.n = 0
                     self.state_t0 = t
             
             # update body position to move towards the centre
+            if abs(self.x) < 1:
+                self.x = 0
+            if abs(self.y) < 1:
+                self.y = 0
+
             self.x -= self.x * (state_t / self.move_time)
             self.y -= self.y * (state_t / self.move_time)
 
@@ -294,29 +318,36 @@ LEG_STEP_THRESHOLD = const(20)
             self.x += (centroid_x - self.x) * (state_t / self.move_time)
             self.y += (centroid_y - self.y) * (state_t / self.move_time)
 
-            if state_t >= self.move_time:
-                self.step_state = STATE_STEP_STEPPING
-                self.state_t0 = t
+            # self.x = centroid_x
+            # self.y = centroid_y
+
+            if self.cg_in_legs():
+                self.n += 1
+
+                if self.n > 2:
+                    self.step_state = STATE_STEP_STEPPING
+                    self.state_t0 = t
 
         elif step_state == STATE_STEP_STEPPING:
             # lift leg
-            z = 30 * sin(state_t * pi / self.step_period)**2
-            self.legs[self.step_leg][2] = self.legs0[self.step_leg][2] + z
+            # z = 30 * sin(state_t * pi / self.step_time)**2
+            # self.legs[self.step_leg][2] = self.legs0[self.step_leg][2] + z
+            self.legs[self.step_leg][2] = self.legs0[self.step_leg][2] + 50
 
-            # if leg is high enough then reset position
-            if z > 10:
-                self.legs[self.step_leg][0] = self.legs0[self.step_leg][0]
-                self.legs[self.step_leg][1] = self.legs0[self.step_leg][1]
+            # # if leg is high enough then reset position
+            # if z > 20:
+            self.legs[self.step_leg][0] = self.legs0[self.step_leg][0]
+            self.legs[self.step_leg][1] = self.legs0[self.step_leg][1]
 
             # keep body on centroid
-            centroid_x, centroid_y = self.get_centroid()
-            self.x = centroid_x
-            self.y = centroid_y
+            # centroid_x, centroid_y = self.get_centroid()
+            # self.x = centroid_x
+            # self.y = centroid_y
 
             if state_t >= self.step_time:
                 self.step_state = STATE_STEP_IDLE
                 self.state_t0 = t
-
+                self.legs[self.step_leg][2] = self.legs0[self.step_leg][2]
 
         # write leg positions
         for i in range(4):
@@ -324,20 +355,17 @@ LEG_STEP_THRESHOLD = const(20)
                 # leg is lifted so don't move it
                 continue
 
-                # apply translational shift to move in the x,y directions
-                self.legs[i][0] -= x_rate * self.walk_dt
-                self.legs[i][1] -= y_rate * self.walk_dt
+            # apply translational shift to move in the x,y directions
+            self.legs[i][0] -= x_rate * self.walk_dt
+            self.legs[i][1] -= y_rate * self.walk_dt
 
-                # apply rotational shift to yaw in each direction
-                self.legs[i][0], self.legs[i][1] = self.rot2d(yaw_rate*self.walk_dt, self.legs[i][0], self.legs[i][1])
-
-        if self.decimator % 10 == 0:
-            print("")
+            # apply rotational shift to yaw in each direction
+            self.legs[i][0], self.legs[i][1] = self.rot2d(yaw_rate*self.walk_dt, self.legs[i][0], self.legs[i][1])
 
         # write the calculated position to the legs
         self.update_body()
     
-
+    
     def end_walk(self):
         # reset all the legs
         self.legs = [row[:] for row in self.legs0]

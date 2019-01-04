@@ -147,8 +147,5 @@ function socket_send(msg) {
 }
 
 function update_connection_status(s) {
-    var pre = document.createElement("p");
-    pre.style.wordWrap = "break-word";
-    pre.innerHTML = s;
-    connection_status.appendChild(pre);
+    connection_status.innerHTML = s;
 }
