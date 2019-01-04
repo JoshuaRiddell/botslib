@@ -190,9 +190,17 @@ class Spider(object):
     def begin_walk(self, dt, freq):
         self.walk_leg_freq = freq
         self.walk_dt = dt
+        
+        self.move_time = 1
+        self.step_time = 1
+        self.step_period = self.move_time + self.step_time
 
-        self.walk_t0 = time.time()
-        self.walk_t = self.walk_t0
+        self.walk_t = 0
+        self.last_step_t = 0
+        self.state_t0 = 0
+
+        self.step_state = 0
+        self.step_leg = 0
 
         self.x_rate = 0
         self.y_rate = 0
@@ -203,51 +211,113 @@ class Spider(object):
         self.y_rate = y_rate
         self.yaw_rate = yaw_rate
 
+
+STATE_STEP_IDLE = const(0)
+STATE_STEP_MOVING = const(1)
+STATE_STEP_STEPPING = const(2)
+STATE_STEP_RETURNING = const(3)
+
+LEG_STEP_THRESHOLD = const(20)
+
+
+    def get_centroid(self):
+        # calculate centroid
+        x_sum = 0
+        y_sum = 0
+
+        for i in range(4):
+            if i == self.step_leg:
+                continue
+
+            x_sum += self.legs[i][0]
+            y_sum += self.legs[i][1]
+
+        centroid_x = x_sum / 3.
+        centroid_y = y_sum / 3.
+
+        return [centroid_x, centroid_y]
+
+    def get_next_leg_index(self):
+        # find the largest leg index
+        max_leg_diff = 0
+        max_leg_index = 0
+        for i in range(4):
+            r = (legs[i][0] - legs0[i][0])**2 + (legs[i][1] - legs[i][1])**2
+
+            if r > max_leg_diff:
+                max_leg_diff = r
+                max_leg_index = i
+
+        # check if we want to lift the leg
+        if max_leg_diff > LEG_STEP_THRESHOLD:
+            return max_leg_index
+        
+        return -1
+
     def update_walk(self):
         # update walk
         x_rate = self.x_rate
         y_rate = self.y_rate
         yaw_rate = self.yaw_rate
-        
+
         # for interrupt mode
         self.walk_t += self.walk_dt
+        t = self.walk_t
 
-        # # wait until dt sconds has elapsed
-        # wait_time = self.walk_dt - (time.time() - self.walk_t)
-        
-        # if wait_time < 0:
-        #     print("spider dt too small, {} second overrun".format(wait_time))
+        step_state = self.step_state
+        state_t = self.state_t0 - t
 
-        #     # just set the time as current and run as fast as we can
-        #     self.walk_t = time.time()
-        # else:
-        #     time.sleep(wait_time)
+        if step_state == STATE_STEP_IDLE:
+            # check if it's been long enough since the last step
+            if t - self.last_step_t >= self.step_period:
 
-        #     # update global time counter
-        #     self.walk_t += self.walk_dt
+                step_leg_idx = self.get_next_leg_index()
 
-        # get a relative time since we started walking
-        t = self.walk_t - self.walk_t0
+                if step_leg_idx != -1:
+                    self.step_leg = step_leg_idx
+                    self.step_state = STATE_STEP_MOVING
+                    self.state_t0 = t
+            
+            # update body position to move towards the centre
+            self.x -= self.x * (state_t / self.move_time)
+            self.y -= self.y * (state_t / self.move_time)
 
-        # get body position in x,y
-        x = 15 * cos(t * 2 * pi * self.walk_leg_freq)
-        y = 15 * cos(t * 2 * pi * self.walk_leg_freq + pi/2)
+        elif step_state == STATE_STEP_MOVING:
+            centroid_x, centroid_y = self.get_centroid()
 
-        # write position to body
-        self.x = x
-        self.y = y
+            # update body position to move towards centroid
+            self.x += (centroid_x - self.x) * (state_t / self.move_time)
+            self.y += (centroid_y - self.y) * (state_t / self.move_time)
+
+            if state_t >= self.move_time:
+                self.step_state = STATE_STEP_STEPPING
+                self.state_t0 = t
+
+        elif step_state == STATE_STEP_STEPPING:
+            # lift leg
+            z = 30 * sin(state_t * pi / self.step_period)**2
+            self.legs[self.step_leg][2] = self.legs0[self.step_leg][2] + z
+
+            # if leg is high enough then reset position
+            if z > 10:
+                self.legs[self.step_leg][0] = self.legs0[self.step_leg][0]
+                self.legs[self.step_leg][1] = self.legs0[self.step_leg][1]
+
+            # keep body on centroid
+            centroid_x, centroid_y = self.get_centroid()
+            self.x = centroid_x
+            self.y = centroid_y
+
+            if state_t >= self.step_time:
+                self.step_state = STATE_STEP_IDLE
+                self.state_t0 = t
+
 
         # write leg positions
         for i in range(4):
-            # handle periodic lifting of legs in phase with body lean
-            z = 150 * cos(-t * 2 * pi * self.walk_leg_freq - 3*pi/4 - pi/2 * i) - 120
-            z = max(0, z)
-            self.legs[i][2] = self.legs0[i][2] + z
-
-            # reset leg position when it is high enough
-            if z > 20:
-                self.legs[i][0] = self.legs0[i][0]
-                self.legs[i][1] = self.legs0[i][1]
+            if (self.legs[i][2] > 10):
+                # leg is lifted so don't move it
+                continue
 
             # apply translational shift to move in the x,y directions
             self.legs[i][0] -= x_rate * self.walk_dt
