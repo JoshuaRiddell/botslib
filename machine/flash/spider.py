@@ -96,8 +96,9 @@ class Spider(object):
 
         # walking functions
         self.begin_walk = cspider.begin_walk
+        self.end_walk = cspider.end_walk
         self.update_walk = cspider.update_walk
-        self.update_walk_params = cspider.update_walk_params
+        self.update_walk_rates = cspider.update_walk_rates
 
         # pass through legs0 stance coordinates
         cspider.set_legs0(self.legs0)
@@ -378,10 +379,10 @@ class Spider(object):
         self.update_body()
 
     def start_walk(self):
-        self.begin_walk(0.1, 0.1)
+        self.begin_walk(0.05, 0.05)
 
         self.step_timer.init(
-            period=100,
+            period=50,
             mode=self.step_timer.PERIODIC,
             callback=lambda timer: self.update_walk()
         )

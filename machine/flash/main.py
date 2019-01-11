@@ -17,7 +17,7 @@ def main(wlan):
         return None, None
 
     # init spider controller
-    sp = spider.Spider(bot)
+    sp = spider.Spider(bot, use_cspider=True)
 
     # setup web server
     calibrate_ws = SocketHandlers.Calibrate(bot)

@@ -39,12 +39,12 @@ class Controller(object):
         if msg_id == "a":
             axes = value.split(',')
             
-            x_rate = float(axes[0]) * 30
-            y_rate = float(axes[1]) * -30
+            x_rate = float(axes[0]) * 20
+            y_rate = float(axes[1]) * -20
             z = float(axes[2])
             roll = (float(axes[6]) - float(axes[5])) / 4
             pitch = float(axes[4]) / 4
-            yaw_rate = float(axes[3]) / 2
+            yaw_rate = float(axes[3]) / 6
 
             self.spider.z = z
             self.spider.update_walk_rates(x_rate, y_rate, yaw_rate)
@@ -53,3 +53,4 @@ class Controller(object):
         elif msg_id == "x":
             self.spider.stop_walk()
         
+
