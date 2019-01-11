@@ -29,7 +29,7 @@ CS = const(5)
 BACKLIGHT_PIN = const(23)
 
 # battery low voltage cutoff threshold
-LVC = 6.4
+LVC = 7.2
 
 # servos definitions
 NUM_SERVOS = const(16)
@@ -75,7 +75,7 @@ class Bot(object):
         self.wlan = None
 
         # setup periodic timer for status image updating
-        self.update_display_status(initial=True)
+        self.display_status_image()
         self.status_tm = Timer(status_update_timer)
         self.status_tm.init(
             period=status_update_rate,
@@ -104,20 +104,21 @@ class Bot(object):
         # save the ap object for later if we want to display the status
         self.wlan = wlan
 
-    def update_display_status(self, initial=False):
+    def display_status_image(self):
+        self.tft.image(0, 0, STATUS_JPG)
+
+    def update_display_status(self):
         "Show the status of the bot on the TFT display."
 
-        if initial:
-            self.tft.image(0, 0, STATUS_JPG)
-
+        # show battery, red indicates low voltage cutoff for 2S
         batt = self.battery.read()
         if batt < LVC:
             col = self.tft.RED
         else:
             col = self.tft.GREEN
-
         self.tft.text(25, 40, "BATT " + str(batt) + "V  ", color=col)
 
+        # show wlan status
         if self.wlan is None:
             self.tft.text(25, 55, "IP     NO CONNECT", color=self.tft.RED)
         else:
@@ -126,14 +127,13 @@ class Bot(object):
 
     def deinit(self):
         "Deinit all peripherals."
-
-        print("Deiniting all peripherals (apart from networking)...")
         self.battery.deinit()
         self.servo.deinit()
         self.i2c.deinit()
         self.tft.deinit()
         self.boot_sw.deinit()
         self.user_sw.deinit()
+        self.status_tm.deinit()
 
     def __del__(self):
         self.deinit()
@@ -141,9 +141,11 @@ class Bot(object):
 
 class Switch(Pin):
     def __init__(self, pin):
+        "Init as a GPIO input with pullup"
         super().__init__(pin, self.IN, self.PULL_UP)
 
     def pressed(self):
+        "Return not value since switches are active low"
         return not self.value()
 
 
@@ -157,7 +159,6 @@ class Battery(ADC):
 
     def read(self):
         "Read pin voltage and scale to battery voltage."
-
         voltage = super().read()*0.0057
         voltage = floor(voltage*100)/100
         return voltage

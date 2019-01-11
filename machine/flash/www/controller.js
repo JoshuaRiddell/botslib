@@ -1,5 +1,7 @@
+// websocket to the bot
 var websocket;
 
+// html elements
 var connection_status;
 var pad1x;
 var pad1y;
@@ -8,16 +10,22 @@ var pad2y;
 var trig_l;
 var trig_r;
 
+// z height slider html elements
 var z_height_slider;
 var z_height_readout;
 
+// walk status readout html element
 var walk_status;
 
+// run init function on load
 window.addEventListener("load", init, false);
+
+// close bot websocket on close
 window.addEventListener('beforeunload', function (e) {
     websocket.close();
 });
 
+// set gamepad polling when gamepad is detected
 window.addEventListener("gamepadconnected", function(e) {
     console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
         e.gamepad.index, e.gamepad.id,
@@ -25,14 +33,16 @@ window.addEventListener("gamepadconnected", function(e) {
     window.setInterval(gamepad_poll, 100);
 });
 
-
+// let the programmer know when the gamepad is not detected
 window.addEventListener("gamepaddisconnected", function(e) {
     console.log("Gamepad disconnected.");
 });
 
+// when the gamepad is polled, send every value to the bot
 function gamepad_poll() {
     var gamepad = navigator.getGamepads()[0];
 
+    // get each gamepad axis
     var val1x = Math.round(gamepad.axes[0] * 100) / 100;
     var val1y = Math.round(gamepad.axes[1] * 100) / 100;
     var val2x = Math.round(gamepad.axes[2] * 100) / 100;
@@ -40,6 +50,7 @@ function gamepad_poll() {
     var val3 = Math.round(gamepad.buttons[6].value * 100) / 100;
     var val4 = Math.round(gamepad.buttons[7].value * 100) / 100;
 
+    // update value readouts on webpage
     pad1x.innerHTML = val1x;
     pad1y.innerHTML = val1y;
     pad2x.innerHTML = val2x;
@@ -47,6 +58,7 @@ function gamepad_poll() {
     trig_l.innerHTML = val3;
     trig_r.innerHTML = val4;
 
+    // implement a dead range (larger for y axis since controller is broken)
     if (Math.abs(val1y) < 0.55) {
         val1y = 0;
     }
@@ -61,12 +73,14 @@ function gamepad_poll() {
         val2y = 0;
     }
 
+    // send data as csv over websocket
     socket_send(
         "a" + val1x + "," + val1y + "," + z_height_slider.value + "," + val2x + "," + val2y + "," + val3 + "," + val4
     );
 }
 
 function init() {
+    // get html elements
     connection_status = document.getElementById("connection_status");
     pad1x = document.getElementById("pad1x");
     pad1y = document.getElementById("pad1y");
@@ -79,18 +93,22 @@ function init() {
     var start_button = document.getElementById("start_button");
     var stop_button = document.getElementById("stop_button");
     
+    // when walk start button is pressed indicate and send start command
     start_button.onclick = function () {
         walk_status.innerHTML = "On";
         socket_send("s");
     }
 
+    // when walk stop button is pressed indicate and send stop command
     stop_button.onclick = function () {
         walk_status.innerHTML = "Off";
         socket_send("x");
     }
 
+    // connect to bot
     attach_socket();
 
+    // implement socket connect and disconnect buttons
     var connect_button = document.getElementById("connect_button");
     var disconnect_button = document.getElementById("disconnect_button");
 
@@ -106,6 +124,8 @@ function init() {
         }
     }
 
+    // when z height slider is changed, change the height indicator.
+    // sending of this value is handled in the gamepad callback
     z_height_slider = document.getElementById("z_height_slider");
     z_height_readout = document.getElementById("z_height_readout");
 
@@ -114,6 +134,7 @@ function init() {
     }
 }
 
+// attaches socket and registers callbacks
 function attach_socket() {
     var wsUri = "ws://" + window.location.hostname + "/controller";
     update_connection_status("Connection to " + wsUri + " ...")
@@ -140,12 +161,14 @@ function onError(evt) {
     update_connection_status('ERROR : <span style="color: red;">' + evt.data + '</span>');
 }
 
+// sends to socket if socket is connected
 function socket_send(msg) {
     if (websocket.readyState == 1) {
         websocket.send(msg);
     }
 }
 
+// updates the connection status text box
 function update_connection_status(s) {
     connection_status.innerHTML = s;
 }

@@ -1,18 +1,15 @@
-import time
 import sys
-
-from machine import Timer
-from microWebSrv import MicroWebSrv
 
 def main(wlan):
     global calibrate_ws
     global controller_ws
-    global step_timer
 
     # init the bot
-    bot = BOTS.Bot(use_cbots=True)
+    bot = bots.Bot(use_cbots=True)
     bot.set_wlan(wlan)
 
+    # don't go any further if the user button is pressed
+    # use this if you locked up the device using subsequent code
     if bot.user_sw.pressed():
         return None, None
 
@@ -26,25 +23,6 @@ def main(wlan):
 
     # stand up
     sp.xyz(0, 0, 40)
-
-    # cbots.begin_walk(0.1, 0.4)
-
-
-    # dt = 40
-
-    # walk with slow dt
-    # sp.walk_dt = dt / 1000.
-    # sp.walk_leg_freq = 0.5
-
-    # sp.begin_walk()
-
-
-    # bot.servo.deinit()
-    
-    # for i in range(100):
-    #     sp.update_walk(0, 0, 0)
-
-    # sp.end_walk()
 
     return [bot, sp]
 
@@ -62,10 +40,13 @@ def accept_socket_cb(webSocket, httpClient):
 if __name__ == '__main__':
     wlan = setup_wlan()
 
+    # do all of this inside a try except
+    # in this way if there are errors then the ftp server doesn't crash
     try:
-        import BOTS
+        import bots
         import spider
-        import SocketHandlers
+        import networking
+        import socket_handlers
 
         [bot, sp] = main(wlan)
 

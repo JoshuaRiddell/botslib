@@ -1,2 +1,2 @@
-# BOTS
-A central library for Out of The Bots robotics products.
+# botslib
+A Pyton library for the Out of the Bots micropython board.

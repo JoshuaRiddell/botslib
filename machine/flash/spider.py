@@ -1,48 +1,43 @@
 from machine import Timer
 from math import atan2, asin, pi, sin, cos, acos, sqrt, degrees
-import time
 
+# safe import of cspider library
 try:
     import cspider
     CSPIDER_LOADED = True
 except ImportError:
     CSPIDER_LOADED = False
 
-# to allow importing on non micropython systems
-try:
-    _CONST_TEST_VAR = const(10)
-except:
-    print("const() not defined. Defining...")
-    const = lambda x: x
-
+# definitions for link lengths
 L1 = const(25)
 L2 = const(48)
 L3 = const(75)
 L4 = const(10)  # offset of foot to leg axis
 
+# body length and width to leg pivot points
 BW = const(47)
 BL = const(88)
 
+# desired stance width and length when legs are centred
 STANCE_WIDTH = const(140)
 STANCE_LENGTH = const(180)
 STANCE_HEIGHT = const(35)
 
-Z = const(30)
-
+# states for walking state machine
 STATE_STEP_IDLE = const(0)
 STATE_STEP_MOVING = const(1)
 STATE_STEP_STEPPING = const(2)
 STATE_STEP_RETURNING = const(3)
 
+# threshold for how early a step is taken
 LEG_STEP_THRESHOLD = const(30)
 
 class Spider(object):
+    "Spider robot controller."
 
     def __init__(self, bot, step_timer=1, use_cspider=False):
         self.bot = bot
-
         self.step_timer = Timer(step_timer)
-
         self.legs0 = [
             [STANCE_LENGTH/2, -STANCE_WIDTH/2, -STANCE_HEIGHT],
             [STANCE_LENGTH/2, STANCE_WIDTH/2, -STANCE_HEIGHT],
@@ -103,6 +98,30 @@ class Spider(object):
         # pass through legs0 stance coordinates
         cspider.set_legs0(self.legs0)
 
+    def set_x(self, x):
+        self.x = x
+        self.update_body()
+
+    def set_y(self, y):
+        self.y = y
+        self.update_body()
+
+    def set_z(self, z):
+        self.z = z
+        self.update_body()
+
+    def set_roll(self, roll):
+        self.roll = roll
+        self.update_body()
+
+    def set_pitch(self, pitch):
+        self.pitch = pitch
+        self.update_body()
+
+    def set_yaw(self, yaw):
+        self.yaw = yaw
+        self.update_body()
+
     def xyzrpy(self, x, y, z, roll, pitch, yaw):
         self.x = x
         self.y = y
@@ -128,6 +147,7 @@ class Spider(object):
         self.update_body()
     
     def update_body(self):
+        "Get required coordinates for each leg and set the leg to those coordinates."
         [x, y, z] = self.body_to_leg(0)
         self.set_leg(0, x, -y, z)
 
@@ -141,6 +161,7 @@ class Spider(object):
         self.set_leg(3, -x, -y, z)
 
     def body_to_leg(self, idx):
+        "Transform the leg coordinates based on the current body position."
         # get offsets for this leg
         leg = self.legs[idx]
         x = leg[0] - self.x
@@ -160,6 +181,7 @@ class Spider(object):
         return [x, y, z]
 
     def set_leg(self, id, x, y, z):
+        "Do leg inverse kinematics and write the results to the servos."
         # do inverse kinematics
         t1, t2, t3 = self.leg_ik(x, y, z)
 
@@ -175,6 +197,7 @@ class Spider(object):
         return [degrees(x) for x in self.leg_ik(x,y,z, **kwargs)]
 
     def leg_ik(self, x, y, z):
+        "Convert x,y,z leg coordinates to joint angles."
         # root angle
         t1 = atan2(y, x)
 
@@ -200,7 +223,6 @@ class Spider(object):
     def begin_walk(self, dt, freq):
         self.walk_leg_freq = freq
         self.walk_dt = dt
-        
 
         self.move_time = 0.5
         self.step_time = 0.2
