@@ -427,10 +427,9 @@ class Spider(object):
         # write to legs
         self.update_body()
 
-    def start_walk(self):
-        dt = 0.1
+    def start_walk(self, dt=0.05, move_time=0.5, step_time=0.5, step_period=0.6, step_thresh=30, scaling_factor=0.1):
 
-        self.begin_walk(dt, 0.3, 0.3, 0.6, 30, 0.05)
+        self.begin_walk(dt, move_time, step_time, step_period, step_thresh, scaling_factor)
 
         self.step_timer.init(
             period=int(dt*1000),

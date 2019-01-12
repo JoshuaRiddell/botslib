@@ -45,21 +45,29 @@ class Controller(object):
 
         if msg_id == "a":
             # angle command so update walk controller with rates
-            axes = value.split(',')
+            axes = [float(x) for x in value.split(',')]
             
-            x_rate = float(axes[0]) * 20
-            y_rate = float(axes[1]) * -20
-            z = float(axes[2])
-            roll = (float(axes[6]) - float(axes[5])) / 4
-            pitch = float(axes[4]) / 4
-            yaw_rate = float(axes[3]) / 6
+            x_rate = axes[0] * 20
+            y_rate = axes[1] * -20
+            z = axes[2]
+            roll = (axes[6] - axes[5]) / 4
+            pitch = axes[4] / 4
+            yaw_rate = axes[3] / 6
 
             self.spider.set_z(z)
             self.spider.rpy(roll, pitch, 0)
             self.spider.update_walk_rates(x_rate, y_rate, yaw_rate)
         elif msg_id == "s":
             # start walk command
-            self.spider.start_walk()
+            print(value)
+            config_vals = [float(x) for x in value.split(',')]
+            self.spider.start_walk(dt=config_vals[0],
+                                    move_time=config_vals[1],
+                                    step_time=config_vals[2],
+                                    step_period=config_vals[3],
+                                    step_thresh=config_vals[4],
+                                    scaling_factor=config_vals[5])
+
         elif msg_id == "x":
             # stop walk command
             self.spider.stop_walk()

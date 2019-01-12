@@ -14,6 +14,16 @@ var trig_r;
 var z_height_slider;
 var z_height_readout;
 
+// walk parameter inputs
+var dt;
+var move_time;
+var step_time;
+var step_period;
+var step_thresh_readout;
+var step_thresh_slider;
+var scaling_factor_readout;
+var scaling_factor_slider;
+
 // walk status readout html element
 var walk_status;
 
@@ -30,9 +40,8 @@ window.addEventListener("gamepadconnected", function(e) {
     console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
         e.gamepad.index, e.gamepad.id,
         e.gamepad.buttons.length, e.gamepad.axes.length);
-    window.setInterval(gamepad_poll, 300);
+    window.setInterval(gamepad_poll, 100);
 });
-
 
 // let the programmer know when the gamepad is not detected
 window.addEventListener("gamepaddisconnected", function(e) {
@@ -97,7 +106,13 @@ function init() {
     // when walk start button is pressed indicate and send start command
     start_button.onclick = function () {
         walk_status.innerHTML = "On";
-        socket_send("s");
+
+        socket_send("s" + dt.value + ","
+                    + move_time.value + ","
+                    + step_time.value + ","
+                    + step_period.value + ","
+                    + step_thresh_slider.value + ","
+                    + scaling_factor_slider.value);
     }
 
     // when walk stop button is pressed indicate and send stop command
@@ -132,6 +147,24 @@ function init() {
 
     z_height_slider.oninput = function () {
         z_height_readout.innerHTML = this.value;
+    }
+
+    // walking parameter inputs
+    dt = document.getElementById("dt");
+    move_time = document.getElementById("move_time");
+    step_time = document.getElementById("step_time");
+    step_period = document.getElementById("step_period");
+    step_thresh_readout = document.getElementById("step_thresh_readout");
+    step_thresh_slider = document.getElementById("step_thresh_slider");
+    scaling_factor_readout = document.getElementById("scaling_factor_readout");
+    scaling_factor_slider = document.getElementById("scaling_factor_slider");
+
+    step_thresh_slider.oninput = function () {
+        step_thresh_readout.innerHTML = this.value;
+    }
+
+    scaling_factor_slider.oninput = function () {
+        scaling_factor_readout.innerHTML = this.value;
     }
 }
 

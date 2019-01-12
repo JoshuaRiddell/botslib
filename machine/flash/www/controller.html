@@ -21,6 +21,18 @@
 
     <h2>Walking Control Panel:</h2>    
     <div>
+        <p>Loop Frequency (dt): </p>
+        <input type="number" min="0" max="0.1" value="0.05" id="dt">
+
+        <p>Step Timing (move time, step time, step period): </p>
+        <input type="number" min="0" max="1" value="0.5" step=".01" id="move_time"> <input type="number" min="0" max="1" value="0.5" step=".01" id="step_time"> <input type="number" min="0" max="2.5" value="1" step=".01" id="step_period">
+
+        <p>Step Threshold (mm): <span id="step_thresh_readout"></span></p>
+        <input type="range" min="5" max="100" value="30" id="step_thresh_slider">
+
+        <p>Triangle Base Scaling Factor: <span id="scaling_factor_readout"></span></p>
+        <input type="range" min="0" max="1.2" value="0.8" step=".01" id="scaling_factor_slider">
+
         <p>Walk Status: <span id="walk_status"></span></p>
         <button id="start_button">START</button> <button id="stop_button">STOP</button>
 
