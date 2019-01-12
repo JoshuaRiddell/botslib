@@ -92,6 +92,14 @@ class Spider(object):
         self.update_walk = cspider.update_walk
         self.update_walk_rates = cspider.update_walk_rates
 
+        # single variable functions
+        self.set_x = cspider.set_x
+        self.set_y = cspider.set_y
+        self.set_z = cspider.set_z
+        self.set_roll = cspider.set_roll
+        self.set_pitch = cspider.set_pitch
+        self.set_yaw = cspider.set_yaw
+
         # pass through legs0 stance coordinates
         cspider.set_legs0(self.legs0)
 
@@ -217,7 +225,7 @@ class Spider(object):
 
         return [t1, t2, t3]
 
-    def begin_walk(self, dt, move_time, step_time, step_period, step_thresh):
+    def begin_walk(self, dt, move_time, step_time, step_period, step_thresh, scaling_factor):
         "Initialise all walking variables."
         # walk timing properties
         self.walk_dt = dt
@@ -238,6 +246,7 @@ class Spider(object):
         # step state and current leg id
         self.step_state = STATE_STEP_IDLE
         self.step_leg = 0
+        self.scaling_factor = scaling_factor
 
         # initialise walking rates
         self.x_rate = 0
@@ -294,7 +303,7 @@ class Spider(object):
         "Sign function for use in calculating if a point is inside a triangle."
         return (x1 - x3) * (y2 - y3) - (x2 - x3) * (y1- y3)
 
-    def cg_in_legs(self, scaling_factor, centroid_x, centroid_y):
+    def cg_in_legs(self, centroid_x, centroid_y):
         """Check if the current CG (self.x,self.y) is inside stability base of the 3 legs
         currently on the ground.
         """
@@ -303,13 +312,13 @@ class Spider(object):
         ids = list(range(4))
         ids.pop(self.step_leg)
 
+        # shrink the triangle down by scaling factor for margin of error
         l = self.legs
         l_shrink = []
-
         for lid in ids:
             c = [
-                centroid_x + (1-scaling_factor)*(centroid_x - l[lid][0]),
-                centroid_y + (1-scaling_factor)*(centroid_y - l[lid][1]),
+                centroid_x + self.scaling_factor * (centroid_x - l[lid][0]),
+                centroid_y + self.scaling_factor * (centroid_y - l[lid][1]),
             ]
             l_shrink.append(c)
 
@@ -335,6 +344,7 @@ class Spider(object):
                 step_leg_idx = self.get_next_leg_index()
 
                 if step_leg_idx != -1:
+                    self.last_step_t = t
                     self.step_leg = step_leg_idx
                     self.step_state = STATE_STEP_MOVING
                     self.n = 0
@@ -356,7 +366,7 @@ class Spider(object):
             self.x += (centroid_x - self.x) * (state_t / self.move_time)
             self.y += (centroid_y - self.y) * (state_t / self.move_time)
 
-            if self.cg_in_legs(0.9, centroid_x, centroid_y):
+            if self.cg_in_legs(centroid_x, centroid_y):
                 self.step_state = STATE_STEP_STEPPING
                 self.state_t0 = t
 
@@ -420,7 +430,7 @@ class Spider(object):
     def start_walk(self):
         dt = 0.1
 
-        self.begin_walk(dt, 0.3, 0.3, 0.6, 30)
+        self.begin_walk(dt, 0.3, 0.3, 0.6, 30, 0.05)
 
         self.step_timer.init(
             period=int(dt*1000),
