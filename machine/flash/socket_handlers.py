@@ -54,7 +54,8 @@ class Controller(object):
             pitch = float(axes[4]) / 4
             yaw_rate = float(axes[3]) / 6
 
-            self.spider.z = z
+            self.spider.set_z(z)
+            self.spider.rpy(roll, pitch, 0)
             self.spider.update_walk_rates(x_rate, y_rate, yaw_rate)
         elif msg_id == "s":
             # start walk command

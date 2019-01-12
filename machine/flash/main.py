@@ -1,4 +1,5 @@
 import sys
+import networking
 
 def main(wlan):
     global calibrate_ws
@@ -14,12 +15,12 @@ def main(wlan):
         return None, None
 
     # init spider controller
-    sp = spider.Spider(bot, use_cspider=True)
+    sp = spider.Spider(bot, use_cspider=False)
 
     # setup web server
-    calibrate_ws = SocketHandlers.Calibrate(bot)
-    controller_ws = SocketHandlers.Controller(sp)
-    setup_web_server(accept_socket_cb)
+    calibrate_ws = socket_handlers.Calibrate(bot)
+    controller_ws = socket_handlers.Controller(sp)
+    networking.setup_web_server(accept_socket_cb)
 
     # stand up
     sp.xyz(0, 0, 40)
@@ -38,14 +39,13 @@ def accept_socket_cb(webSocket, httpClient):
 
 
 if __name__ == '__main__':
-    wlan = setup_wlan()
+    wlan = networking.setup_wlan()
 
     # do all of this inside a try except
     # in this way if there are errors then the ftp server doesn't crash
     try:
         import bots
         import spider
-        import networking
         import socket_handlers
 
         [bot, sp] = main(wlan)

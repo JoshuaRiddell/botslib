@@ -29,9 +29,6 @@ STATE_STEP_MOVING = const(1)
 STATE_STEP_STEPPING = const(2)
 STATE_STEP_RETURNING = const(3)
 
-# threshold for how early a step is taken
-LEG_STEP_THRESHOLD = const(30)
-
 class Spider(object):
     "Spider robot controller."
 
@@ -220,34 +217,41 @@ class Spider(object):
 
         return [t1, t2, t3]
 
-    def begin_walk(self, dt, freq):
-        self.walk_leg_freq = freq
+    def begin_walk(self, dt, move_time, step_time, step_period, step_thresh):
+        "Initialise all walking variables."
+        # walk timing properties
         self.walk_dt = dt
-
-        self.move_time = 0.5
-        self.step_time = 0.2
-        self.step_period = self.move_time + self.step_time
-
         self.walk_t = 0
+
+        # moving and stepping times (seconds)
+        self.move_time = move_time
+        self.step_time = step_time
+        self.step_period = step_period
+
+        # distance threshold to cause leg stepping
+        self.step_thresh = step_thresh
+
+        # step state times
         self.last_step_t = -100
         self.state_t0 = 0
 
-        self.step_state = 0
+        # step state and current leg id
+        self.step_state = STATE_STEP_IDLE
         self.step_leg = 0
 
+        # initialise walking rates
         self.x_rate = 0
         self.y_rate = 0
         self.yaw_rate = 0
 
-        self.decimator = 0
-        self.step_lock = 0
-    
     def update_walk_rates(self, x_rate, y_rate, yaw_rate):
+        "Update walking rate values for next update."
         self.x_rate = x_rate
         self.y_rate = y_rate
         self.yaw_rate = yaw_rate
 
     def get_centroid(self):
+        "Get centroid of legs currently on the ground."
         # calculate centroid
         x_sum = 0
         y_sum = 0
@@ -265,51 +269,62 @@ class Spider(object):
         return [centroid_x, centroid_y]
 
     def get_next_leg_index(self):
-        # find the largest leg index
+        "Get next leg to be lifted. Returns leg index. Returns -1 if no leg needs to be lifted"
+
+        # find the leg which is farthest from leg resting position
         max_leg_diff = 0
         max_leg_index = 0
         for i in range(4):
-            r = (self.legs[i][0] - self.legs0[i][0])**2 + (self.legs[i][1] - self.legs0[i][1])**2
+            # cartesian distance to legs0 position
+            r = sqrt((self.legs[i][0] - self.legs0[i][0])**2 + (self.legs[i][1] - self.legs0[i][1])**2)
 
             if r > max_leg_diff:
                 max_leg_diff = r
                 max_leg_index = i
 
         # check if we want to lift the leg
-        if max_leg_diff > LEG_STEP_THRESHOLD:
+        if max_leg_diff > self.step_thresh:
             return max_leg_index
         
+        # we don't want to lift any legs
         return -1
 
     @staticmethod
     def sign(x1, y1, x2, y2, x3, y3):
+        "Sign function for use in calculating if a point is inside a triangle."
         return (x1 - x3) * (y2 - y3) - (x2 - x3) * (y1- y3)
 
-    def cg_in_legs(self):
+    def cg_in_legs(self, scaling_factor, centroid_x, centroid_y):
+        """Check if the current CG (self.x,self.y) is inside stability base of the 3 legs
+        currently on the ground.
+        """
+
+        # get list of IDs not including stepping leg
         ids = list(range(4))
         ids.pop(self.step_leg)
 
         l = self.legs
+        l_shrink = []
 
-        d1 = self.sign(self.x, self.y, l[ids[0]][0], l[ids[0]][1], l[ids[1]][0], l[ids[1]][1])
-        d2 = self.sign(self.x, self.y, l[ids[1]][0], l[ids[1]][1], l[ids[2]][0], l[ids[2]][1])
-        d3 = self.sign(self.x, self.y, l[ids[2]][0], l[ids[2]][1], l[ids[0]][0], l[ids[0]][1])
+        for lid in ids:
+            c = [
+                centroid_x + (1-scaling_factor)*(centroid_x - l[lid][0]),
+                centroid_y + (1-scaling_factor)*(centroid_y - l[lid][1]),
+            ]
+            l_shrink.append(c)
+
+        # see if point is inside leg coordinates
+        d1 = self.sign(self.x, self.y, l_shrink[0][0], l_shrink[0][1], l_shrink[1][0], l_shrink[1][1])
+        d2 = self.sign(self.x, self.y, l_shrink[1][0], l_shrink[1][1], l_shrink[2][0], l_shrink[2][1])
+        d3 = self.sign(self.x, self.y, l_shrink[2][0], l_shrink[2][1], l_shrink[0][0], l_shrink[0][1])
 
         has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0)
         has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
 
         return not (has_neg and has_pos)
 
-    def update_walk(self):
-        # update walk
-        x_rate = self.x_rate
-        y_rate = self.y_rate
-        yaw_rate = self.yaw_rate
-
-        # for interrupt mode
-        self.walk_t += self.walk_dt
-        t = self.walk_t
-
+    def update_walk_state_machine(self, t):
+        # get current state
         step_state = self.step_state
         state_t = t - self.state_t0
 
@@ -341,54 +356,56 @@ class Spider(object):
             self.x += (centroid_x - self.x) * (state_t / self.move_time)
             self.y += (centroid_y - self.y) * (state_t / self.move_time)
 
-            # self.x = centroid_x
-            # self.y = centroid_y
-
-            if self.cg_in_legs():
-                self.n += 1
-
-                if self.n > 2:
-                    self.step_state = STATE_STEP_STEPPING
-                    self.state_t0 = t
+            if self.cg_in_legs(0.9, centroid_x, centroid_y):
+                self.step_state = STATE_STEP_STEPPING
+                self.state_t0 = t
 
         elif step_state == STATE_STEP_STEPPING:
+            sl = self.legs[self.step_leg]
+            sl0 = self.legs0[self.step_leg]
+
             # lift leg
-            # z = 30 * sin(state_t * pi / self.step_time)**2
-            # self.legs[self.step_leg][2] = self.legs0[self.step_leg][2] + z
-            self.legs[self.step_leg][2] = self.legs0[self.step_leg][2] + 50
+            sl[2] = sl0[2] + 50
 
-            # # if leg is high enough then reset position
-            # if z > 20:
-            self.legs[self.step_leg][0] = self.legs0[self.step_leg][0]
-            self.legs[self.step_leg][1] = self.legs0[self.step_leg][1]
-
-            # keep body on centroid
-            # centroid_x, centroid_y = self.get_centroid()
-            # self.x = centroid_x
-            # self.y = centroid_y
+            # reset position
+            sl[0] = sl0[0]
+            sl[1] = sl0[1]
 
             if state_t >= self.step_time:
                 self.step_state = STATE_STEP_IDLE
                 self.state_t0 = t
-                self.legs[self.step_leg][2] = self.legs0[self.step_leg][2]
+                sl[2] = sl0[2]
 
+    def update_walk_transformations(self, t):
         # write leg positions
+        xr = self.x_rate
+        yr = self.y_rate
+        yawr = self.yaw_rate
+
         for i in range(4):
             if (self.legs[i][2] > 10):
                 # leg is lifted so don't move it
                 continue
 
             # apply translational shift to move in the x,y directions
-            self.legs[i][0] -= x_rate * self.walk_dt
-            self.legs[i][1] -= y_rate * self.walk_dt
+            self.legs[i][0] -= xr * self.walk_dt
+            self.legs[i][1] -= yr * self.walk_dt
 
             # apply rotational shift to yaw in each direction
-            self.legs[i][0], self.legs[i][1] = self.rot2d(yaw_rate*self.walk_dt, self.legs[i][0], self.legs[i][1])
+            self.legs[i][0], self.legs[i][1] = self.rot2d(yawr * self.walk_dt, self.legs[i][0], self.legs[i][1])
 
-        # write the calculated position to the legs
+
+    def update_walk(self):
+        "Periodic walk update function. Handles stepping and body translation."
+
+        # calculate new time
+        self.walk_t += self.walk_dt
+        t = self.walk_t
+
+        self.update_walk_state_machine(t)
+        self.update_walk_transformations(t)
         self.update_body()
-    
-    
+        
     def end_walk(self):
         # reset all the legs
         self.legs = [row[:] for row in self.legs0]
@@ -401,10 +418,12 @@ class Spider(object):
         self.update_body()
 
     def start_walk(self):
-        self.begin_walk(0.05, 0.05)
+        dt = 0.1
+
+        self.begin_walk(dt, 0.3, 0.3, 0.6, 30)
 
         self.step_timer.init(
-            period=50,
+            period=int(dt*1000),
             mode=self.step_timer.PERIODIC,
             callback=lambda timer: self.update_walk()
         )

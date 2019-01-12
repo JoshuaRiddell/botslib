@@ -1,6 +1,7 @@
 import network
 import time
 import json
+from microWebSrv import MicroWebSrv
 
 def setup_wlan():
     "Create wlan object and start telnet and ftp server"
@@ -51,3 +52,4 @@ def setup_web_server(accept_socket_cb):
     mws.WebSocketThreaded = False
     mws.AcceptWebSocketCallback = accept_socket_cb
     mws.Start()
+

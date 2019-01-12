@@ -30,8 +30,9 @@ window.addEventListener("gamepadconnected", function(e) {
     console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
         e.gamepad.index, e.gamepad.id,
         e.gamepad.buttons.length, e.gamepad.axes.length);
-    window.setInterval(gamepad_poll, 100);
+    window.setInterval(gamepad_poll, 300);
 });
+
 
 // let the programmer know when the gamepad is not detected
 window.addEventListener("gamepaddisconnected", function(e) {
