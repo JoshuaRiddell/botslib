@@ -98,7 +98,13 @@ class Bot(object):
         cbots.set_servo_zero_pos(self.servo.zero_pos)
 
         # change our write servo function to be the c implementations
-        self.servo.set_rad = cbots.set_servo_rad
+        self.servo.get_all = cbots.servo_get_all
+        self.servo.get_rad = cbots.servo_get_rad
+        self.servo.get_deg = cbots.servo_get_deg
+        self.servo.set_deg_raw = cbots.servo_set_deg_raw
+        self.servo.set_rad_raw = cbots.servo_set_rad_raw
+        self.servo.set_rad = cbots.servo_set_rad
+        self.servo.set_deg = cbots.servo_set_deg
 
     def set_wlan(self, wlan):
         # save the ap object for later if we want to display the status
