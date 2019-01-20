@@ -10,6 +10,11 @@ var pad2y;
 var trig_l;
 var trig_r;
 
+// controller scaling
+var x_scale;
+var y_scale;
+var yaw_scale;
+
 // z height slider html elements
 var z_height_slider;
 var z_height_readout;
@@ -40,7 +45,7 @@ window.addEventListener("gamepadconnected", function(e) {
     console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
         e.gamepad.index, e.gamepad.id,
         e.gamepad.buttons.length, e.gamepad.axes.length);
-    window.setInterval(gamepad_poll, 100);
+    window.setInterval(gamepad_poll, 150);
 });
 
 // let the programmer know when the gamepad is not detected
@@ -82,6 +87,10 @@ function gamepad_poll() {
     if (Math.abs(val2y) < 0.1) {
         val2y = 0;
     }
+    
+    val1x = val1x * x_scale.value;
+    val1y = val1y * y_scale.value;
+    val2x = val2x * yaw_scale.value;
 
     // send data as csv over websocket
     socket_send(
@@ -98,6 +107,10 @@ function init() {
     pad2y = document.getElementById("pad2y");
     trig_l = document.getElementById("trig_l");
     trig_r = document.getElementById("trig_r");
+
+    x_scale = document.getElementById("x_scale");
+    y_scale = document.getElementById("y_scale");
+    yaw_scale = document.getElementById("yaw_scale");
 
     walk_status = document.getElementById("walk_status");
     var start_button = document.getElementById("start_button");

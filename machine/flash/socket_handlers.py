@@ -59,7 +59,6 @@ class Controller(object):
             self.spider.update_walk_rates(x_rate, y_rate, yaw_rate)
         elif msg_id == "s":
             # start walk command
-            print(value)
             config_vals = [float(x) for x in value.split(',')]
             self.spider.start_walk(dt=config_vals[0],
                                     move_time=config_vals[1],
