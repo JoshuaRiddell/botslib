@@ -25,9 +25,8 @@ STANCE_HEIGHT = const(35)
 
 # states for walking state machine
 STATE_STEP_IDLE = const(0)
-STATE_STEP_MOVING = const(1)
+STATE_STEP_LEANING = const(1)
 STATE_STEP_STEPPING = const(2)
-STATE_STEP_RETURNING = const(3)
 
 class Spider(object):
     "Spider robot controller."
@@ -346,7 +345,7 @@ class Spider(object):
                 if step_leg_idx != -1:
                     self.last_step_t = t
                     self.step_leg = step_leg_idx
-                    self.step_state = STATE_STEP_MOVING
+                    self.step_state = STATE_STEP_LEANING
                     self.n = 0
                     self.state_t0 = t
             
@@ -359,7 +358,7 @@ class Spider(object):
             self.x -= self.x * (state_t / self.move_time)
             self.y -= self.y * (state_t / self.move_time)
 
-        elif step_state == STATE_STEP_MOVING:
+        elif step_state == STATE_STEP_LEANING:
             centroid_x, centroid_y = self.get_centroid()
 
             # update body position to move towards centroid
